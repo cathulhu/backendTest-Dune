@@ -13,11 +13,11 @@ import
 
 
 const markers = [
-  { markerOffset: 25, name: "MANCHESTER", coordinates: [53, 2.2] },
-  { markerOffset: 25, name: "RAL_ECHO", coordinates: [46, 6] },
-  { markerOffset: 25, name: "CERN_PDUNE_CASTOR", coordinates: [46, 6] },
-  { markerOffset: 25, name: "IMPERIAL", coordinates: [46, 6] },
-  { markerOffset: 25, name: "FNAL_DCACHE", coordinates: [46, 6] },
+  { markerOffset: 1, name: "MANCHESTER", coordinates: [2.2,53] },
+  { markerOffset: 1, name: "RAL_ECHO", coordinates: [1.2, 51.6] },
+  { markerOffset: 1, name: "CERN_PDUNE_CASTOR", coordinates: [6, 46] },
+  { markerOffset: 1, name: "IMPERIAL", coordinates: [0.17, 51.4] },
+  { markerOffset: 1, name: "FNAL_DCACHE", coordinates: [-88.27, 41.84] },
 ];
 
 const geoUrl =
@@ -88,19 +88,19 @@ function App()
             to={oneOfThem.toCoord}
             from={oneOfThem.fromCoord}
             stroke="#F53"
-            strokeWidth={2}
+            strokeWidth={1}
           />;
 
           })}
 
         {markers.map(({ name, coordinates, markerOffset }) => (
         <Marker key={name} coordinates={coordinates}  >
-          <circle r={2} fill="#F00" stroke="#fff" strokeWidth={2} />
+          <circle r={1} fill="#228C22" stroke="#fff" strokeWidth={1} />
 
           <text
             textAnchor="middle"
             y={markerOffset}
-            style={{ fontFamily: "system-ui", fill: "#5D5A6D" }}
+            style={{ fontFamily: "sans-serif", fontSize:8, fill: "#5D5A6D" }}
           >
             {name}
           </text>
