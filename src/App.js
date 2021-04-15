@@ -179,15 +179,17 @@ const parseSiteList = () => {
 
     var dateParameters = new URLSearchParams({"startDate": dateFormatConverter(dateRange.from), "endDate": dateFormatConverter(dateRange.to)});
 
-    console.log("fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
+    console.log("fetching from: fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
 
     fetch("http://localhost:3001/test?" + dateParameters.toString())
+//TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
       .then((res) => res.json())
       .then((res) => {
 
         let allTransferedAmount = 0;
 
-        // console.log(res.data[0].name)
+
+        // console.log("result: "+res.data)
 
         if (res.data[0].name!=="ERROR") {
 
@@ -294,10 +296,17 @@ const parseSiteList = () => {
 
 
   return (
+
+
+
     <div className="App">
       <header className="App-header">
         <h1>DUNE Network Activity Monitor - Alpha</h1>
       </header>
+
+
+      {parseSiteList()}
+
 
       <div class="basicRow">
         <div class="basicColumn">
@@ -329,9 +338,7 @@ const parseSiteList = () => {
                     />
                   );
                 })}
-                //could add another line here ^ to show ration of send vs
-                recieve between individual sites but it's one within another not
-                side by side so doesn't look great.
+                //could add another line here ^ to show ration of send vs recieve between individual sites but it's one within another not side by side so doesn't look great.
                 {individualSiteData.map(
                   (
                     {
@@ -403,36 +410,43 @@ const parseSiteList = () => {
 
         </div>
 
-          <p>
-
-
-              <button disabled={!dateRange.from} className="link" onClick={resetCalendarDateClick}>
-                Reset Selected Dates
-              </button>
-
-              <button onClick={parseSiteList}>
-                Do site stuff
-              </button>
-
-          </p>
-
-          <DayPicker
-            selectedDays={[dateRange.from, dateRange]}
-            onDayClick={handleDateClick}
-          />
 
 
 
-        <div class="basicColumn">
 
-          {dateRange.to && <button onClick={action}>Get DUNE Transfer Data</button>}
 
-          {checkIfResultsFound()}
 
-          {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
+        <DayPicker
+          selectedDays={[dateRange.from, dateRange]}
+          onDayClick={handleDateClick}
+        />
 
-          {resultsFound && JSON.stringify(transfers)}
-        </div>
+
+
+
+
+
+
+
+
+      </div>
+      <div class="basicRow">
+
+      {dateRange.to && <button onClick={action}>Get DUNE Transfer Data</button>}
+
+      <button disabled={!dateRange.from} className="link" onClick={resetCalendarDateClick}>
+        Reset Selected Dates
+      </button>
+
+      {checkIfResultsFound()}
+
+
+      </div>
+      <div class="basicRow">
+      <div class="basicColumn">
+        {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
+        {resultsFound && JSON.stringify(transfers)}
+      </div>
       </div>
     </div>
   );
