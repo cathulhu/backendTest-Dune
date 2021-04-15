@@ -54,6 +54,8 @@ function checkIfResultsFound()
 
 const markers = [
 
+  { markerOffset: 1, otherName:"", name: "Atlantis", coordinates: [-43, 32.6] },
+
   { markerOffset: 1, otherName:"", name: "RAL_ECHO", coordinates: [1.2, 51.6] },
   { markerOffset: 1, otherName:"", name: "CERN_PDUNE_CASTOR", coordinates: [6, 46] },
   { markerOffset: 1, otherName:"", name: "PRAUGE", coordinates: [14.469, 50.123] },
@@ -63,9 +65,7 @@ const markers = [
   { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3_XROOTD", coordinates: [4.87, 45.78] },
   { markerOffset: 1, otherName:"", name: "NERSC", coordinates: [-122.272778, 37.871667] },
 
-  { markerOffset: 1, otherName:"", name: "Atlantis (Unknon Location Placeholder)!", coordinates: [-43, 32.6] },
-
-    { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [0, 0] },
+  { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [0, 0] },
   { markerOffset: 1, otherName:"", name: "T3_US_NERSC", coordinates: [1, 0] },       //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
   { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3", coordinates: [2, 0] },   //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
 
@@ -164,13 +164,18 @@ const parseSiteList = () => {
     console.log(markers)
     // console.log(res.root.atp_site[0].group[1].$.name)
 
+    parseTransfers()
+
   });
+
+
+
 };
 
 
 
 
-  const action = () => {
+  const parseTransfers = () => {
 
     resultsFound=false
 
@@ -179,7 +184,7 @@ const parseSiteList = () => {
 
     var dateParameters = new URLSearchParams({"startDate": dateFormatConverter(dateRange.from), "endDate": dateFormatConverter(dateRange.to)});
 
-    console.log("fetching from: fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
+    console.log("fetching transfer data from: fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
 
     fetch("http://localhost:3001/test?" + dateParameters.toString())
 //TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
@@ -195,40 +200,94 @@ const parseSiteList = () => {
 
 //TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
 
+          var sourceLocationAlt=markers[0].name
+          var destinationLocationAlt=markers[0].name
+          var mysteryCoordinates=markers[0].coordinates
+
           const mappedTransfers = res.data.map((entry) => {
+
+
+
             const sourceLocation = markers.find(
-              (location) => entry.source === location.name
-            );
+            (location) => entry.source === location.name
+          );
+
+
             const destinationLocation = markers.find(
-              (location) => entry.destination === location.name
-            );
+            (location) => entry.destination === location.name
+          );
+
+
             const speedInMB = parseFloat(entry["transfer_speed(MB/s)"]).toFixed(
               2
             );
+
             allTransferedAmount += entry.file_size;
 
-            return {
-              from: sourceLocation.name,
-              to: destinationLocation.name,
-              fromCoord: sourceLocation.coordinates,
-              toCoord: destinationLocation.coordinates,
-              speedInMB: speedInMB,
-            };
+            // console.log(entry.file_size)
+
+            if (!sourceLocation && !destinationLocation){
+              return {
+                from: sourceLocationAlt,
+                to: destinationLocationAlt,
+                fromCoord: mysteryCoordinates,
+                toCoord: mysteryCoordinates,
+                speedInMB: speedInMB,
+                sentToDestSizeMB: entry.file_size / 1048576,
+              };
+            }else if (!sourceLocation){
+              return {
+                from: sourceLocationAlt,
+                to: destinationLocation.name,
+                fromCoord: mysteryCoordinates,
+                toCoord: destinationLocation.coordinates,
+                speedInMB: speedInMB,
+                sentToDestSizeMB: entry.file_size / 1048576,
+              };
+            }else if (!destinationLocation){
+              return {
+                from: sourceLocation.name,
+                to: destinationLocationAlt,
+                fromCoord: sourceLocation.coordinates,
+                toCoord: mysteryCoordinates,
+                speedInMB: speedInMB,
+                sentToDestSizeMB: entry.file_size / 1048576,
+              };
+            }else{
+                return {
+               from: sourceLocation.name,
+               to: destinationLocation.name,
+               fromCoord: sourceLocation.coordinates,
+               toCoord: destinationLocation.coordinates,
+               speedInMB: speedInMB,
+               sentToDestSizeMB: entry.file_size / 1048576,
+             };
+            }
+
+
           });
 
+
+          console.log("mapped transfers: ")
+          console.log(mappedTransfers)
 
 
           allTransferedAmount /= 1048576; //adjusting to mb
 
           settransfers(mappedTransfers);
 
-          const collectionOfSiteObjects = markers.map((marker) => {
+          // console.log(markers)
+
+          const collectionOfSiteObjects = markers.map((x) => {
             return {
-              ...marker,
+              ...x,
               totalSent: 0,
               totalReceived: 0,
             };
           });
+
+          console.log("collection site objects:")
+          console.log(collectionOfSiteObjects)
 
           collectionOfSiteObjects.forEach((entry) => {
             res.data
@@ -258,9 +317,10 @@ const parseSiteList = () => {
             ).toFixed(4);
           });
 
+
           resultsFound=true;
-          console.log("Results found:")
-          console.log(collectionOfSiteObjects);
+          // console.log("Results found:")
+          // console.log(collectionOfSiteObjects);
 
           setIndividualSiteData(collectionOfSiteObjects);
 
@@ -278,21 +338,42 @@ const parseSiteList = () => {
 
 
 
+  // function populateMap(passedCallback){
+  //   return new Promise(function(resolve,reject) {
+  //
+  //     parseSiteList()
+  //     console.log("first function done (get sites)")
+  //     resolve();
+  //   })
+  // }
+  //
+  // function chainPopulateMapStuff() {
+  //   populateMap.then(parseTransfers)
+  // }
 
 
 
-
-
+  //
+  // function one(callback) {
+  //   return new Promise(function(resolve, reject) {
+  //       parseSiteList()
+  //       console.log("first function executed");
+  //       resolve();
+  //
+  //   })
+  // }
+  //
+  // function two() {
+  //   console.log("second function executed");
+  // }
+  //
+  // function three() {
+  //   one().then(two)
+  // }
 
 
   const [tooltip, setTooltip] = useState("");
   const [position, setPosition] = useState({ coordinates: [0, 0], zoom:   1 });
-
-
-
-
-
-
 
 
   return (
@@ -303,9 +384,6 @@ const parseSiteList = () => {
       <header className="App-header">
         <h1>DUNE Network Activity Monitor - Alpha</h1>
       </header>
-
-
-      {parseSiteList()}
 
 
       <div class="basicRow">
@@ -432,7 +510,7 @@ const parseSiteList = () => {
       </div>
       <div class="basicRow">
 
-      {dateRange.to && <button onClick={action}>Get DUNE Transfer Data</button>}
+      {dateRange.to && <button onClick={parseSiteList}>Get DUNE Transfer Data</button>}
 
       <button disabled={!dateRange.from} className="link" onClick={resetCalendarDateClick}>
         Reset Selected Dates

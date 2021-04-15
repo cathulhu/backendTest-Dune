@@ -12,6 +12,28 @@
       "max_usage_percentage": "0.12831063019178082"
     },
     {
+      "name": "SourTransfer",
+      "source": "MYSTERY",
+      "destination": "RAL_ECHO",
+      "file_size": 1977817785.0,
+      "start_time": "2021-02-22 17:08:13",
+      "file_transfer_time": "105.0",
+      "transfer_speed(b/s)": "150690878.85714287",
+      "transfer_speed(MB/s)": "17.963752610342844",
+      "max_usage_percentage": "0.15069087885714286"
+    },
+    {
+      "name": "SuperSourTransfer",
+      "source": "NOWHERE",
+      "destination": "ELSEWHERE",
+      "file_size": 1977817785.0,
+      "start_time": "2021-02-22 17:08:13",
+      "file_transfer_time": "105.0",
+      "transfer_speed(b/s)": "150690878.85714287",
+      "transfer_speed(MB/s)": "17.963752610342844",
+      "max_usage_percentage": "0.15069087885714286"
+    },
+    {
       "name": "PDSPProd4_protoDUNE_sp_reco_stage1_p0.5GeV_35ms_sce_off_41015662_0_20210119T070539Z.root",
       "source": "FNAL_DCACHE",
       "destination": "RAL_ECHO",
