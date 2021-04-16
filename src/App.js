@@ -81,6 +81,7 @@ const markers = [
 
 ];
 
+const baseUrlBackend="http://fermicloud129.fnal.gov:3001"
 
 const geoUrl =
   "./world-110m.json";
@@ -131,7 +132,7 @@ function App() {
 const parseSiteList = () => {
 
   console.log("fetching DUNE site date from backend fermicloud129.fnal.gov:3001/getsites")
-  fetch("http://localhost:3001/getsites").then ((res) => res.json()).then((res) => {
+  fetch(baseUrlBackend + "/getsites").then ((res) => res.json()).then((res) => {
 
     //res.root.atp_site[0].$.latitude
     // console.log(res.root.atp_site)
@@ -186,7 +187,7 @@ const parseSiteList = () => {
 
     console.log("fetching transfer data from: fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
 
-    fetch("http://localhost:3001/test?" + dateParameters.toString())
+    fetch(baseUrlBackend + "/test?" + dateParameters.toString())
 //TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
       .then((res) => res.json())
       .then((res) => {
@@ -194,7 +195,7 @@ const parseSiteList = () => {
         let allTransferedAmount = 0;
 
 
-        // console.log("result: "+res.data)
+        console.log("result: "+res.data)
 
         if (res.data[0].name!=="ERROR") {
 
