@@ -32,9 +32,10 @@ router.get("/", function (req, res, next) {
 
     fs.readFile("out.json", "utf8", (err, data) => {
       if (err) {
+        console.log(data)
         console.log("\n** file not found! es_client.py probably didn't succesfully make out.json!**\n")
         // console.error(err);
-        return;
+        // return;
       }
       console.log(data+"\n")
       res.end(data);

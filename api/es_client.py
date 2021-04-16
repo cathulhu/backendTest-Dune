@@ -251,16 +251,21 @@ f = open(output_file, "w+")
 #    f.write(json.dumps({"data" : error_out}, indent=2))
 #    f.close()
 #else:
+
 info = []
-for data in scroll(client, index, es_template, "2m"):
-    info += get_speeds(data)
+try:
+    for data in scroll(client, index, es_template, "2m"):
+        info += get_speeds(data)
+except:
+    print("Error: Uncaught error when looping through scroll")
+    info = []
 if len(info) == 0:
     print("Error: No transfers fitting required parameters found")
     f = open(output_file, "w+")
     f.write(json.dumps({"data" : error_out}, indent=2))
     f.close()
 else:
-    jres = json.dumps({"data": info}, indent=2)
+    jres = json.dumps({"data": [info]}, indent=2)
     f = open(output_file, "w+")
     f.write(jres)
     f.close()
