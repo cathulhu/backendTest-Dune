@@ -195,11 +195,12 @@ const parseSiteList = () => {
         let allTransferedAmount = 0;
 
 
-        console.log("result: "+res.data)
+        console.log("result: ")
+        console.log(res.data)
 
 
 
-        if (res.data[0].name!=="ERROR" && res.data.hasOwnProperty("name")) {
+        if (res.data[0][0].hasOwnProperty("name") && res.data[0][0].name!=="ERROR") {
 
 //TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
 
@@ -207,7 +208,7 @@ const parseSiteList = () => {
           var destinationLocationAlt=markers[0].name
           var mysteryCoordinates=markers[0].coordinates
 
-          const mappedTransfers = res.data.map((entry) => {
+          const mappedTransfers = res.data[0].map((entry) => {
 
 
 
@@ -293,7 +294,10 @@ const parseSiteList = () => {
           console.log(collectionOfSiteObjects)
 
           collectionOfSiteObjects.forEach((entry) => {
-            res.data
+
+            console.log(entry)
+
+            res.data[0]
               .filter((jsonThing) => {
                 return jsonThing.source === entry.name;
               })
@@ -301,7 +305,7 @@ const parseSiteList = () => {
                 entry.totalSent += item.file_size / 1048576; //dividing the total bytes into megabytes 1024 b to kb, 1024 kb to mb
               });
 
-            res.data
+            res.data[0]
               .filter((jsonThing) => {
                 return jsonThing.destination === entry.name;
               })
@@ -341,38 +345,10 @@ const parseSiteList = () => {
 
 
 
-  // function populateMap(passedCallback){
-  //   return new Promise(function(resolve,reject) {
-  //
-  //     parseSiteList()
-  //     console.log("first function done (get sites)")
-  //     resolve();
-  //   })
-  // }
-  //
-  // function chainPopulateMapStuff() {
-  //   populateMap.then(parseTransfers)
-  // }
 
 
 
-  //
-  // function one(callback) {
-  //   return new Promise(function(resolve, reject) {
-  //       parseSiteList()
-  //       console.log("first function executed");
-  //       resolve();
-  //
-  //   })
-  // }
-  //
-  // function two() {
-  //   console.log("second function executed");
-  // }
-  //
-  // function three() {
-  //   one().then(two)
-  // }
+
 
 
   const [tooltip, setTooltip] = useState("");

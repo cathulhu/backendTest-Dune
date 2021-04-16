@@ -1,5 +1,5 @@
 {
-  "data": [
+  "data": [[
     {
       "name": "PDSPProd4_protoDUNE_sp_reco_stage1_p0.5GeV_35ms_sce_off_41015693_0_20210119T070534Z.root",
       "source": "FNAL_DCACHE",
@@ -27501,4 +27501,5 @@
       "max_usage_percentage": "0.07190346626923078"
     }
   ]
+]
 }
