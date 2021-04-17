@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Collapse, Button, CardBody, Card  } from 'reactstrap';
+import { Collapse, Button, CardBody, Card, Table  } from 'reactstrap';
 import ReactTooltip from "react-tooltip";
 import ReactDOM from "react-dom";
 import Tooltip from "react-simple-tooltip";
@@ -345,7 +345,7 @@ const parseSiteList = () => {
           console.log(resultsFound)
         }
 
-
+        resetCalendarDateClick()
       });
   };
 
@@ -594,6 +594,8 @@ const parseSiteList = () => {
                   {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
                   {resultsFound && JSON.stringify(transfers)}
 
+                  
+
     						</div>
     					</div>
     				</div>
@@ -604,6 +606,7 @@ const parseSiteList = () => {
                   <div class="row">
                   <div>
                     <Button color="primary" onClick={toggle} style={{ marginBottom: '1rem' }}>New Search</Button>
+                    {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
                     </div>
                   </div>
     						</div>
@@ -662,6 +665,7 @@ const parseSiteList = () => {
     					<div class="row" id="detailRow">
     						<div class="col-md-12">
                 <p>Site detail info here</p>
+
     						</div>
     					</div>
     				</div>
