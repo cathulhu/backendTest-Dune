@@ -7,10 +7,10 @@
   background-color: #5a5e63;
 }
 
-.rsm-svg {
-  max-height: 800px;
-  max-width: 1000px;
-}
+/* .rsm-svg {
+  max-height: 900px;
+  max-width: 1400px;
+} */
 
 .basicColumn {
   padding: 5px;
@@ -20,4 +20,73 @@
 .basicRow {
   display: flex;
   flex-wrap: wrap;
+}
+
+#fixedRightCol{
+  position: fixed;
+  top: 50;
+  right: 0;
+}
+
+#mapTitleRow{
+  padding-bottom: 15px;
+}
+
+#mapTitleAnStatusRow{
+  background-color: orange;
+  padding: 15px;
+}
+
+#mainSectionCol{
+  padding: 15px;
+  padding-right: 40px;
+}
+
+#fixedRightCol{
+  background-color: red;
+  padding-left: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+
+#searchButtonRow{
+  background-color: green;
+  margin-bottom: 5px;
+}
+
+#calendarRow{
+  background-color: pink;
+    margin-bottom: 5px;
+}
+
+#detailRow{
+  background-color: yellow
+}
+
+#legendRow{
+  background-color: teal
+}
+
+#legendDescriptionCol{
+  background-color: chartreuse;
+  margin-bottom: 20px;
+  padding: 10px;
+}
+
+#mapRow{
+  background-color: cyan;
+  margin-top: 15px;
+  margin-bottom: 15px
+}
+
+#listRow{
+  background-color: maroon
+}
+
+#sidebarCol{
+  background-color: red
+}
+
+#statusSectionCol{
+  background-color: blue
 }
