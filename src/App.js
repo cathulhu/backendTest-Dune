@@ -58,13 +58,13 @@ const markers = [
 
   { markerOffset: 1, otherName:"", name: "RAL_ECHO", coordinates: [1.2, 51.6] },
   { markerOffset: 1, otherName:"", name: "CERN_PDUNE_CASTOR", coordinates: [6, 46] },
-  { markerOffset: 1, otherName:"", name: "PRAUGE", coordinates: [14.469, 50.123] },
+  { markerOffset: 1, otherName:"", name: "PRAGUE", coordinates: [14.469, 50.123] },
   { markerOffset: 1, otherName:"", name: "FNAL_DCACHE", coordinates: [-88.27, 41.84] },
 
   { markerOffset: 1, otherName:"", name: "DUNE_US_BNL_SDCC", coordinates: [-72.876311, 40.86794] },
   { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3_XROOTD", coordinates: [4.87, 45.78] },
   { markerOffset: 1, otherName:"", name: "NERSC", coordinates: [-122.272778, 37.871667] },
-
+  { markerOffset: 1, othername:"", name: "WSU - GRID_CE2", coordinates: [42.358, -83.067] },
   { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [0, 0] },
   { markerOffset: 1, otherName:"", name: "T3_US_NERSC", coordinates: [1, 0] },       //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
   { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3", coordinates: [2, 0] },   //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?

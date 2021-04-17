@@ -41,7 +41,7 @@ max_speed = 100000000000 #100 gb/s
 #volumes and scroll.
 search_size = 2500
 
-error_out = [{
+error_out = [[{
     "name" : "ERROR",
     "source" : "ERROR",
     "destination" : "ERROR",
@@ -51,7 +51,7 @@ error_out = [{
     "transfer_speed(b/s)" : "0.0",
     "transfer_speed(MB/s)" : "0.0",
     "max_usage_percentage" : "0.0"
-}]
+}]]
 
 #Last supplied command line argument should be a date
 #of the form yyyy/mm/dd
