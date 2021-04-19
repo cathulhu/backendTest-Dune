@@ -359,9 +359,10 @@ const parseSiteList = () => {
 
 
   const [tooltip, setTooltip] = useState("");
-  const [position, setPosition] = useState({ coordinates: [0, 0], zoom:   1 });
+  const [mapPosition, setMapPosition] = useState({ coordinates: [0, 0], zoom:   1 });
   const [isOpen, setIsOpen] = useState(false);
   const [searchResultStatus, setSearchResultStatus ] = useState();    //TODO actually get this working so empty text returned unless search complete, then return results found or not
+  const [selectedSiteIndex, setSelectedSiteIndex] = useState();
 
   const toggle = () => setIsOpen(!isOpen);
 
@@ -471,7 +472,8 @@ const parseSiteList = () => {
 
                   <div id={"map"}>
                           <ComposableMap data-tip="">
-                            <ZoomableGroup zoom={3} center={[-34, 34]}>
+                            <ZoomableGroup zoom={1} center={[0, 0]}
+                              onMoveEnd={setMapPosition}>
 
                               <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
@@ -516,7 +518,7 @@ const parseSiteList = () => {
                                     //alert("radius click")
                                   }}
                                   >
-                                    <circle r={1} fill="rgba(255,255,255,1)" />
+
                                     <circle
                                       r={40 * fractionOfDataSent}
                                       fill="rgba(87,235,51,0.4)"
@@ -547,7 +549,7 @@ const parseSiteList = () => {
                                     key={i}
                                     coordinates={coordinates}
                                     onClick={() => {
-                                      //alert("center click");
+                                      setSelectedSiteIndex(i);
                                     }}
                                     onMouseEnter={() => {
                                       setTooltip(
@@ -558,7 +560,7 @@ const parseSiteList = () => {
                                       setTooltip("");
                                     }}
                                   >
-                                    <circle r={1} fill="rgba(75,0,146,1)" />
+                                    <circle r={2.2/mapPosition.zoom} fill="rgba(75,0,146,1)" />
                                   </Marker>
                                 )
                               )}
@@ -589,12 +591,33 @@ const parseSiteList = () => {
     					</div>
     					<div class="row" id="listRow">
     						<div class="col-md-12">
-                  <p>-collapsable- list of raw data results here</p>
+                  <h5>Log of Transfers</h5>
 
-                  {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
-                  {resultsFound && JSON.stringify(transfers)}
+                  <Table>
+                    <thead>
+                      <tr>
+                        <th>To</th>
+                        <th>From</th>
+                        <th>Speed</th>
+                        <th>Filesize</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                    {transfers.map((transfer, i) => {
+                        return (
+                          <tr key={i}>
+                            <td>{transfer.to}</td>
+                            <td>{transfer.from}</td>
+                            <td>{transfer.speedInMB}</td>
+                            <td>{transfer.sentToDestSizeMB}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
 
-                  
+                  </Table>
+
+
 
     						</div>
     					</div>
@@ -665,6 +688,8 @@ const parseSiteList = () => {
     					<div class="row" id="detailRow">
     						<div class="col-md-12">
                 <p>Site detail info here</p>
+
+                  <p> {selectedSiteIndex!=undefined && individualSiteData[selectedSiteIndex].name} </p>
 
     						</div>
     					</div>
