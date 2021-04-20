@@ -56,20 +56,28 @@ function checkIfResultsFound()
 
 const markers = [
 
-  { markerOffset: 1, otherName:"", name: "Atlantis", coordinates: [-43, 32.6] },
+  // { markerOffset: 1, otherName:"", name: "Atlantis", coordinates: [-43, 32.6] },
 
   { markerOffset: 1, otherName:"", name: "RAL_ECHO", coordinates: [1.2, 51.6] },
   { markerOffset: 1, otherName:"", name: "CERN_PDUNE_CASTOR", coordinates: [6, 46] },
   { markerOffset: 1, otherName:"", name: "PRAGUE", coordinates: [14.469, 50.123] },
-  { markerOffset: 1, otherName:"", name: "FNAL_DCACHE", coordinates: [-88.27, 41.84] },
+  { markerOffset: 1, otherName:"GPGRID", name: "FNAL_DCACHE", coordinates: [-88.27, 41.84] },
 
-  { markerOffset: 1, otherName:"", name: "DUNE_US_BNL_SDCC", coordinates: [-72.876311, 40.86794] },
-  { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3_XROOTD", coordinates: [4.87, 45.78] },
+  { markerOffset: 1, otherName:"BNL-SDCC-CE01", name: "DUNE_US_BNL_SDCC", coordinates: [-72.876311, 40.86794] },
+  { markerOffset: 1, otherName:"DUNE_FR_CCIN2P3", name: "DUNE_FR_CCIN2P3_XROOTD", coordinates: [4.87, 45.78] },
   { markerOffset: 1, otherName:"", name: "NERSC", coordinates: [-122.272778, 37.871667] },
-  { markerOffset: 1, othername:"", name: "WSU - GRID_CE2", coordinates: [42.358, -83.067] },
-  { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [0, 0] },
-  { markerOffset: 1, otherName:"", name: "T3_US_NERSC", coordinates: [1, 0] },       //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
-  { markerOffset: 1, otherName:"", name: "DUNE_FR_CCIN2P3", coordinates: [2, 0] },   //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
+  { markerOffset: 1, othername:"WSU", name: "WSU - GRID_CE2", coordinates: [-83.067, 42.358] },
+  { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [6.04, 46.23] },
+  { markerOffset: 1, otherName:"", name: "T3_US_NERSC", coordinates: [-122.3, 37.867] },       //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
+  { markerOffset: 1, otherName:"", name: "BR_CBPF", coordinates: [-43.174, -22.954] },   //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
+  { markerOffset: 1, otherName:"", name: "CA_VICTORIA", coordinates: [-123.31, 48.47] },
+  { markerOffset: 1, otherName:"", name: "IN_TIFR", coordinates: [72.806, 18.907] },
+  { markerOffset: 1, otherName:"BNL", name: "US_BNL", coordinates: [-72, 40] },
+  { markerOffset: 1, otherName:"FNAL", name: "US_FNAL", coordinates: [-88.255, 41.841] },
+  { markerOffset: 1, otherName:"SU-ITS-CE2", name: "US_SU_ITS", coordinates: [-76.14, 43.04] },
+  { markerOffset: 1, otherName:"SLATE_US_NMSU_DISCOVERY", name: "NMSU-DISCOVERY", coordinates: [-106.77, 32.31] },
+  { markerOffset: 1, otherName:"JINR", name: "JINR_CONDOR_CE", coordinates: [56.743, 37.196] }, //TODO WRONG
+  { markerOffset: 1, otherName:"", name: "BR_UNICAMP", coordinates: [-47.05691000711719, -22.81839974327466 ] },
 
   //stuff commented out below has been found in the API results from CRIC API so I figure we should favor that
 
@@ -144,11 +152,18 @@ const parseSiteList = () => {
       var otherNameString = item.group[1].$.name
       let re = new RegExp('[A-Z][A-Z]_');
 
+      // console.log(otherNameString, [parseFloat(item.$.longitude),parseFloat(item.$.latitude)])
+
+      //getting rid of UK_ US_ CA_ etc prefixes below
       if (re.test(otherNameString))
       {
         otherNameString = otherNameString.substring(3).toUpperCase();
       }
 
+      if (parseFloat(item.$.longitude)==0 && parseFloat(item.$.latitude)==0)
+      {
+        console.log("0,0 entry detected: " + otherNameString )
+      }
 
       return{
         markerOffset: 1,
@@ -159,14 +174,38 @@ const parseSiteList = () => {
       };
     });
 
+
+
+
+    //overwite the downloaded list with any hardcoded ones we have, then combine the rest
+    markers.forEach((item, i) => {
+
+
+
+    const matchId = mappedSites.findIndex(element => element.name == item.name || element.name == item.otherName)
+
+      if (matchId > -1)
+      {
+        // console.log("replacing: ")
+        // console.log(mappedSites[matchId])
+        // console.log("with ")
+        // console.log(item)
+        mappedSites[matchId]=item
+      }
+      else{
+        mappedSites.push(item)
+      }
+    });
+
+
     //append these to the existing hardcoded sites
-    mappedSites.forEach(x =>  markers.push(x))
+    // mappedSites.forEach(x =>  markers.push(x))
 
     console.log(mappedSites)
     console.log(markers)
     // console.log(res.root.atp_site[0].group[1].$.name)
 
-    parseTransfers()
+    parseTransfers(mappedSites)
 
   });
 
@@ -177,7 +216,7 @@ const parseSiteList = () => {
 
 
 
-  const parseTransfers = () => {
+  const parseTransfers = (passedSites) => {
 
     resultsFound=false
 
@@ -206,24 +245,24 @@ const parseSiteList = () => {
 
 
 
-        if (res.data[0][0].hasOwnProperty("name") && res.data[0][0].name!=="ERROR") {
+        if (res.data[0][0].hasOwnProperty("name") && res.data[0][0].source!=="ERROR") {
 
 //TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
 
-          var sourceLocationAlt=markers[0].name
-          var destinationLocationAlt=markers[0].name
-          var mysteryCoordinates=markers[0].coordinates
+          var sourceLocationAlt=passedSites[0].name
+          var destinationLocationAlt=passedSites[0].name
+          var mysteryCoordinates=passedSites[0].coordinates
 
           const mappedTransfers = res.data[0].map((entry) => {
 
 
 
-            const sourceLocation = markers.find(
+            const sourceLocation = passedSites.find(
             (location) => entry.source === location.name
           );
 
 
-            const destinationLocation = markers.find(
+            const destinationLocation = passedSites.find(
             (location) => entry.destination === location.name
           );
 
@@ -288,7 +327,7 @@ const parseSiteList = () => {
 
           // console.log(markers)
 
-          const collectionOfSiteObjects = markers.map((x) => {
+          const collectionOfSiteObjects = passedSites.map((x) => {
             return {
               ...x,
               totalSent: 0,
@@ -300,8 +339,6 @@ const parseSiteList = () => {
           console.log(collectionOfSiteObjects)
 
           collectionOfSiteObjects.forEach((entry) => {
-
-            console.log(entry)
 
             res.data[0]
               .filter((jsonThing) => {
