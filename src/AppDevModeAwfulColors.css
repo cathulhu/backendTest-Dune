@@ -8,7 +8,7 @@
 }
 
 /* .rsm-svg {
-  max-height: 8000px;
+  max-height: 900px;
   max-width: 1400px;
 } */
 
@@ -22,14 +22,15 @@
   flex-wrap: wrap;
 }
 
-#root{
-  background-color: grey;
-}
-
 #fixedRightCol{
   position: fixed;
-  top: 88px;
+  top: 115px;
   right: 0;
+}
+
+#searchRangeTextRow{
+  background-color: brown;
+  margin-bottom: 5px;
 }
 
 #legendRow{
@@ -38,11 +39,6 @@
 
 #mapTitleRow{
   padding-bottom: 15px;
-}
-
-#searchRangeTextRow{
-  background-color: brown;
-  margin-bottom: 5px;
 }
 
 #statusRow{

@@ -1,110 +1,285 @@
 #!/usr/bin/env python3
-import sys
-import json
-import pprint
-from elasticsearch import Elasticsearch
 
-print("These were the paramters passed to esclient.py: \n")
-print(sys.argv)
-
-#!/usr/bin/env python3
-
-#Sys needed for arguments
-import sys
 
 #JSON needed to process incoming Elasticsearch results
 #and for output formatting for easier use by webserver.
 import json
 
+import os
+import sys
+import urllib
+
+
+
 #ElasticSearch API is needed (alternatively commands could be manually written
 #with REST Python API) for interaction with Fermilab's ElasticSearch system
 from elasticsearch import Elasticsearch
 
+#Used to check that we're not looking for dates in the future
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
+
+
+from urllib.request import urlopen, HTTPError, URLError
+
 
 #Argparse will be used for proper argument handling in the long-term.
-#import argparse as ap
+import argparse as ap
 
-#Started code for future use.
-#parser = ap.ArgumentParser()
-#parser.add_argument()
+today = datetime.today()
+
+
+
+print("These were the paramters passed to es_client.py: \n")
+print(sys.argv)
+print("\n")
+
+
+
+
+#Arguments for the script. Help info should explain uses
+#TODO: Add help info
+parser = ap.ArgumentParser()
+parser.add_argument('-S', '--start', dest="start_date", default=today.strftime("%Y/%m/%d"))
+parser.add_argument('-E', '--end', dest="end_date", default="0")
+#parser.add_argument('-R', '--rule_id', dest="rule_id")
+#parser.add_argument('-U', '--user', dest="user")
+parser.add_argument('-M', '--mode', dest="mode", default=0)
+
+
+args = parser.parse_args()
+
+start = args.start_date
+end = args.end_date
+if end == "0":
+    end = start
 
 #Hard-coded value for what we think we remember the connection speed
 #being. Used to calculate our network use percentage.
-#Needs refining
+#Completely inaccurate and was never actually used. Should likely be removed.
+#Only haven't because need to check if changes to JSON format would cause
+#issues with other code.
 max_speed = 100000000000 #100 gb/s
+
 
 
 #How many search results we want to return.
 #Capping search results at 2,500 since API documentation recommends keeping searches
 #relatively small and stepping through with search_after instead of using massive search
 #volumes and scroll.
-search_size = 2500
-
-error_out = [[{
-    "name" : "ERROR",
-    "source" : "ERROR",
-    "destination" : "ERROR",
-    "file_size" : 0,
-    "start_time" : "1970-01-01 00:00:00",
-    "file_transfer_time" : "0.0",
-    "transfer_speed(b/s)" : "0.0",
-    "transfer_speed(MB/s)" : "0.0",
-    "max_usage_percentage" : "0.0"
-}]]
-
-#Last supplied command line argument should be a date
-#of the form yyyy/mm/dd
-y,m,d = sys.argv[-1].split('/')
+search_size = 5000
 
 
-today = datetime.today()
-target_date = datetime.strptime(sys.argv[-1], "%Y/%m/%d")
+if len(start) < 10:
+    print('start date must be in format yyyy/mm/dd')
+    errorHandler("date format")
+
+if len(end) < 10:
+    print('end date must be in format yyyy/mm/dd')
+    errorHandler("date format")
+
+
+y0,m0,d0 = start.split('/')
+y1,m1,d1 = end.split('/')
+
+
+#Search template for Elasticsearch client
+#Queries with multiple conditions need multiple levels of
+#wrapping. Everything should be in a query, exact matches
+#should be in a "must" tag, and ranges should be in a "filter" tag.
+#Both "must" and "filter" should be wrapped in a single "bool" tag.
+
+mode = int(args.mode)
+
+
 
 #Hardcoded output file name
-output_file = "out.json"
+if mode in [0, 1, 2, 3]:
+    output_file = "out.json"
+elif mode == 4:
+    output_file = "fails.json"
 
 
-if target_date > today:
-    print("Error: Cannot read data from future dates")
-    f = open(output_file, "w+")
-    f.write(json.dumps({"data" : error_out}, indent=2))
-    f.close()
-    exit()
+
+
 
 #URL of the DUNE Elasticsearch cluster
 es_cluster = "https://fifemon-es.fnal.gov"
 
-#Index for the specified month
-index = f"rucio-transfers-v0-{y}.{m}"
-
-#Makes the Elasticsearch client
-client = Elasticsearch([es_cluster])
-
-#Search template for Elasticsearch client
-#Still needs to be made to work with date range
-es_template = {
-    "query" : {
-        "bool" : {
-            "filter" : {
-                "range" : {
-                    "@timestamp" : {
-                        "gte" : f"{y}-{m}-{d}",
-                        "lte" : f"{y}-{m}-{d}"
+#Mode codes:
+#   0 : All events of type "transfer-done" that are not from the regular checkup
+#   1 : All events of type "transfer-done" from the regular checkup
+#   2 : All events of type "transfer-done" regardless of whether source
+#   3 : Not currently remembered. Will work on that.
+#   4 : All events of types "transfer-failed" and "transfer-queued_failed"
+if mode == 0:
+    es_template = {
+        "query" : {
+            "bool" : {
+                "filter" : {
+                    "range" : {
+                        "@timestamp" : {
+                            "gte" : f"{y0}-{m0}-{d0}",
+                            "lte" : f"{y1}-{m1}-{d1}"
+                        }
                     }
-                }
-            },
-            "must" : {
-                "match": {
-                     "event_type" : "transfer-done"
+                },
+                "must" : {
+                    "match": {
+                         "event_type" : "transfer-done"
+                    }
+                },
+                "must_not" : {
+                    "wildcard" : {
+                        "name" : "1gbtestfile.*"
+                    }
                 }
             }
         }
     }
-}
+
+elif mode == 1 or mode == 3:
+    es_template = {
+        "query" : {
+            "bool" : {
+                "filter" : {
+                    "range" : {
+                        "@timestamp" : {
+                            "gte" : f"{y0}-{m0}-{d0}",
+                            "lte" : f"{y1}-{m1}-{d1}"
+                        }
+                    }
+                },
+                "must" : {
+                    "match": {
+                         "event_type" : "transfer-done"
+                    },
+                },
+                "should" : {
+                    "wildcard" : {
+                        "name" : "1gbtestfile.*"
+                    }
+                },
+                "minimum_should_match" : 1,
+            }
+        }
+    }
+elif mode == 2:
+    es_template = {
+        "query" : {
+            "bool" : {
+                "filter" : {
+                    "range" : {
+                        "@timestamp" : {
+                            "gte" : f"{y0}-{m0}-{d0}",
+                            "lte" : f"{y1}-{m1}-{d1}"
+                        }
+                    }
+                },
+                "must" : {
+                    "match": {
+                         "event_type" : "transfer-done"
+                    }
+                }
+            }
+        }
+    }
+elif mode == 4:             #Checks failures
+    es_template = {
+        "query" : {
+            "bool" : {
+                "filter" : {
+                    "range" : {
+                        "@timestamp" : {
+                            "gte" : f"{y0}-{m0}-{d0}",
+                            "lte" : f"{y1}-{m1}-{d1}"
+                        }
+                    }
+                },
+                "should" : [
+                    {
+                        "match": {
+                             "event_type" : "transfer-failed"
+                        },
+                    },
+                    {
+                        "match": {
+                             "event_type" : "transfer-submission_failed"
+                        }
+                    }
+                ],
+                "minimum_should_match" : 1
+            }
+        }
+    }
 
 
 
+
+
+
+
+def errorHandler(type):
+    error_out_object = [[{
+            "name" : type,
+            "source" : "ERROR",
+            "destination" : "ERROR",
+            "file_size" : 0,
+            "start_time" : "1970-01-01 00:00:00",
+            "file_transfer_time" : "0.0",
+            "transfer_speed(b/s)" : "0.0",
+            "transfer_speed(MB/s)" : "0.0",
+            "max_usage_percentage" : "0.0"
+    }]]
+
+    if os.path.exists(output_file):
+        os.remove(output_file)
+
+    with open(output_file, "w+") as f:
+        f.write(json.dumps({"data" : json.dumps(error_out_object)}, indent=2))
+    exit()
+
+
+
+
+
+
+
+
+
+target_date = datetime.strptime(end, "%Y/%m/%d")
+curr_date = datetime.strptime(start, "%Y/%m/%d")
+
+if target_date < curr_date:
+    swap = target_date
+    target_date = curr_date
+    curr_date = swap
+
+
+if target_date > today:
+    print("Error: Cannot read data from future dates, exiting...")
+    errorHandler("future date")
+
+
+
+
+
+
+
+
+
+#check if network is up
+try:
+    myURL = urlopen(es_cluster)
+except HTTPError as e:
+    print("Error, couldn't contact elasticsearch db at: " + es_cluster + " , exiting...")
+    errorHandler("network down")
+
+
+
+#Makes the Elasticsearch client
+client = Elasticsearch([es_cluster])
 
 #End of initial variable and template setup
 
@@ -132,6 +307,24 @@ def compile_info(transfers, speed_info):
     #Returns the output list
     return json_strings
 
+def get_errs(transfers):
+    json_strings = []
+    for transfer in transfers:
+        try:
+            new_json = {
+                "name": transfer["_source"]["name"],
+                "source": transfer["_source"]["src-rse"],
+                "destination": transfer["_source"]["dst-rse"]
+            }
+            if transfer["_source"]["event_type"] == "transfer-failed":
+                new_json["reason"] = "rx_error"
+            else:
+                new_json["reason"] = "tx_error"
+            json_strings.append(new_json)
+        except:
+            print(f"transfer {transfer} caused a problem")
+    return json_strings
+
 #Function to calculate the relevant times and speeds from each transfer
 #in our list of JSONS (which at this point have been converted to dictionaries)
 def get_speeds(transfers):
@@ -141,10 +334,7 @@ def get_speeds(transfers):
         if transfer["_source"]["event_type"] != "transfer-done":
             transfers.remove(transfer)
             continue
-        #Try/except that was supposed to catch and remove the wrong types of
-        #JSONs. Didn't account for a LOT of potential issues like errors.
-        #Needs rewriting to handle those.
-        #Also pulls the (transfer request?) creation time
+        #Pulls request creation time
         c_time = transfer["_source"]["created_at"]
         #Pulls the (transfer request?) submission time, the transfer start time,
         #and the transfer end time, as well as the file size
@@ -167,8 +357,8 @@ def get_speeds(transfers):
             split_1 = time_arr[i].split()
             split_2 = time_arr[i + 1].split()
             #Splits the hour-minute-second portion into individual pieces
-            #Note: In the future, with stupidly long transmissions, we may
-            #need to account for days, but I doubt it.
+            #Note: In the future, with very long transmissions or transmissions
+            #started around midnight we may need to account for days, but I doubt it.
             t_1 = split_1[1].split(':')
             t_2 = split_2[1].split(':')
 
@@ -221,8 +411,8 @@ def get_speeds(transfers):
     else:
         return []
 
-
 #Based on Simplernerd's tutorial here: https://simplernerd.com/elasticsearch-scroll-python/
+#Scrolls through all of the results in a given date range
 def scroll(es, idx, body, scroll):
     page = es.search(index=idx, body=body, scroll=scroll, size=search_size)
     scroll_id = page['_scroll_id']
@@ -238,62 +428,66 @@ def scroll(es, idx, body, scroll):
 
 #Start of main process
 
-
-#TODO: Add code to make sure we're not trying to search future dates
-
-#Runs a single search for the Elasticsearch client
-#data_in = client.search(index = index, body=es_template, size=search_size)["hits"]["hits"]
-
+#Create output file object and empty info array
 f = open(output_file, "w+")
-#data = scroll(client, index, es_template, "2m")
-#if len(data) == 0:
-#    print("Warning: No finished transfers found in specified date range")
-#    f.write(json.dumps({"data" : error_out}, indent=2))
-#    f.close()
-#else:
+f.write('{ "data" : [\n')
 
-info = []
-try:
-    for data in scroll(client, index, es_template, "2m"):
-        info += get_speeds(data)
-except:
-    print("Error: Uncaught error when looping through scroll")
-    info = []
-if len(info) == 0:
+data_exists = False
+
+xfer_count = 0
+
+#Scrolls through the ES client and adds all information to the info array
+#compile_info now runs inside of get_speeds, so data in "info" will be in its
+#final state before export.
+while curr_date <= target_date:
+    y = curr_date.strftime("%Y")
+    m =  curr_date.strftime("%m")
+    #Index for the specified month
+    index = f"rucio-transfers-v0-{y}.{m}"
+    #Modes for transfer_done events with various templates
+    if mode in [0, 1, 2, 3]:
+        try:
+            if client.indices.exists(index=index):
+                for data in scroll(client, index, es_template, "5m"):
+                    info = get_speeds(data)
+                    xfer_count += len(info)
+                    if len(info) > 0:
+                        data_exists = True
+                    for res in info:
+                        f.write(json.dumps(res, indent=2))
+                        f.write(",\n")
+        except:
+            print("Error: Uncaught error when looping through scroll, couldn't process response (if any), exiting...")
+            f.close()
+            errorHandler("scroll error")
+    #Mode to process transfer_failed and transfer-queued_failed data
+    elif mode == 4:
+        try:
+            if client.indices.exists(index=index):
+                for data in scroll(client, index, es_template, "5m"):
+                    try:
+                        info = get_errs(data)
+                    except:
+                        print("get_errs failed")
+                    xfer_count += len(info)
+                    if len(info) > 0:
+                        data_exists = True
+                    for res in info:
+                        f.write(json.dumps(res, indent=2))
+                        f.write(",\n")
+        except:
+            print("Error: Uncaught error when looping through scroll, couldn't process response (if any), exiting...")
+            f.close()
+            errorHandler("scroll error")
+    curr_date += relativedelta(months=+1)
+#Checks to make sure we have at least one transfer during the timeframe
+#we were handed and exports the error template if not.
+if not data_exists:
     print("Error: No transfers fitting required parameters found")
-    f = open(output_file, "w+")
-    f.write(json.dumps({"data" : error_out}, indent=2))
     f.close()
-else:
-    jres = json.dumps({"data": [info]}, indent=2)
-    f = open(output_file, "w+")
-    f.write(jres)
-    f.close()
+    errorHandler("no results")
 
+print(f"Period contained {xfer_count} processable records.")
 
-#processed_records = len(info)
-#print (f"{processed_records} records processed")
-
-#Makes sure that there is at least one transfer in the specified date range.
-#Skips the next step in the process if that's the case, which lets our next
-#bit of error handling exit the program.
-#if(len(data_in) == 0):
-#    print("Error: No finished transfers found in specified date range")
-#    speeds = []
-#else:
-#    speeds, data_in = get_speeds(data_in)
-
-#Checks that we have at least one valid transfer in the specified date range.
-#Writes a static error JSON to the output file if no transfers are found,
-#and then exits.
-#if(len(speeds) == 0):
-#    print("Error: No transfers fitting required parameters found")
-#    f = open(output_file, "w+")
-#    f.write(json.dumps({"data" : error_out}, indent=2))
-#    f.close()
-#    exit()
-
-
-#Compiles all of our information to JSON objects and then dumps them
-#as a single JSON object to our output file.
-#info = compile_info(data_in, speeds)
+f.write("]}")
+f.close()

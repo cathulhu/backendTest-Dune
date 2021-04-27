@@ -1,11 +1,25 @@
 import React, { useState } from "react";
-import { Collapse, Button, CardBody, Card, Table  } from 'reactstrap';
+import {
+  Collapse,
+  Button,
+  CardBody,
+  Card,
+  Table,
+  Dropdown,
+  DropdownToggle,
+  DropdownMenu,
+  DropdownItem,
+  Badge,
+  Alert,
+  Spinner,
+} from "reactstrap";
 import ReactTooltip from "react-tooltip";
 import ReactDOM from "react-dom";
 import Tooltip from "react-simple-tooltip";
-import DayPicker, { DateUtils } from 'react-day-picker';
-import DayPickerInput from 'react-day-picker/DayPickerInput';
-import 'react-day-picker/lib/style.css';
+import DayPicker, { DateUtils } from "react-day-picker";
+import DayPickerInput from "react-day-picker/DayPickerInput";
+import "react-day-picker/lib/style.css";
+import { Bar } from "react-chartjs-2";
 import {
   ComposableMap,
   Geographies,
@@ -16,68 +30,186 @@ import {
   Marker,
 } from "react-simple-maps";
 import "./App.css";
-import './css/bootstrap.min.css';
+import "./css/bootstrap.min.css";
 // import siteData from "./data/duneSiteList.json"
 
 // var fs = require('fs');
 
+var resultsFound = false;
+var siteUnclicked = true;
 
-var resultsFound = false
-
+const srGraphOptions = {
+  scales: {
+    xAxes: [
+      {
+        gridLines: {
+          color: "rgba(0, 0, 0, 0)",
+        },
+      },
+    ],
+    yAxes: [
+      {
+        gridLines: {
+          color: "rgba(0, 0, 0, 0)",
+        },
+      },
+    ],
+  },
+  indexAxis: "y",
+  // Elements options apply to all of the options unless overridden in a dataset
+  // In this case, we are setting the border of each horizontal bar to be 2px wide
+  elements: {
+    bar: {
+      borderWidth: 2,
+    },
+  },
+  responsive: true,
+  plugins: {
+    legend: {
+      position: "right",
+      display: false,
+    },
+    title: {
+      display: true,
+      text: "Send Recieve Ratio",
+    },
+  },
+};
 
 function dateFormatConverter(passedDate) {
-  const date = passedDate.toISOString().split('T')[0].replace(/-/g, "/");
-  return date
+  const date = passedDate.toISOString().split("T")[0].replace(/-/g, "/");
+  return date;
 }
 
-
-
-
-function checkIfResultsFound()
-{
-
+function checkIfResultsFound() {
   // console.log("results found flag says: " + resultsFound)
 
-  if (resultsFound == undefined){
-    return
+  if (resultsFound == undefined) {
+    return;
   }
 
-  if (resultsFound){
-      return <p>Results Found</p>
+  if (resultsFound) {
+    return <p>Results Found</p>;
+  } else {
+    return <p>No Results</p>;
   }
-  else{
-    return <p>NO RESULTS FOUND</p>
-  }
-
 }
-
 
 //longitude first, then latitude
 
 const markers = [
-
   // { markerOffset: 1, otherName:"", name: "Atlantis", coordinates: [-43, 32.6] },
 
-  { markerOffset: 1, otherName:"", name: "RAL_ECHO", coordinates: [1.2, 51.6] },
-  { markerOffset: 1, otherName:"", name: "CERN_PDUNE_CASTOR", coordinates: [6, 46] },
-  { markerOffset: 1, otherName:"", name: "PRAGUE", coordinates: [14.469, 50.123] },
-  { markerOffset: 1, otherName:"GPGRID", name: "FNAL_DCACHE", coordinates: [-88.27, 41.84] },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "RAL_ECHO",
+    coordinates: [1.2, 51.6],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "CERN_PDUNE_CASTOR",
+    coordinates: [6, 46],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "PRAGUE",
+    coordinates: [14.469, 50.123],
+  },
+  {
+    markerOffset: 1,
+    otherName: "GPGRID",
+    name: "FNAL_DCACHE",
+    coordinates: [-88.27, 41.84],
+  },
 
-  { markerOffset: 1, otherName:"BNL-SDCC-CE01", name: "DUNE_US_BNL_SDCC", coordinates: [-72.876311, 40.86794] },
-  { markerOffset: 1, otherName:"DUNE_FR_CCIN2P3", name: "DUNE_FR_CCIN2P3_XROOTD", coordinates: [4.87, 45.78] },
-  { markerOffset: 1, otherName:"", name: "NERSC", coordinates: [-122.272778, 37.871667] },
-  { markerOffset: 1, othername:"WSU", name: "WSU - GRID_CE2", coordinates: [-83.067, 42.358] },
-  { markerOffset: 1, otherName:"", name: "CERN_PDUNE_EOS", coordinates: [6.04, 46.23] },
-  { markerOffset: 1, otherName:"", name: "T3_US_NERSC", coordinates: [-122.3, 37.867] },       //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
-  { markerOffset: 1, otherName:"", name: "BR_CBPF", coordinates: [-43.174, -22.954] },   //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
-  { markerOffset: 1, otherName:"", name: "CA_VICTORIA", coordinates: [-123.31, 48.47] },
-  { markerOffset: 1, otherName:"", name: "IN_TIFR", coordinates: [72.806, 18.907] },
-  { markerOffset: 1, otherName:"BNL", name: "US_BNL", coordinates: [-72, 40] },
-  { markerOffset: 1, otherName:"FNAL", name: "US_FNAL", coordinates: [-88.255, 41.841] },
-  { markerOffset: 1, otherName:"SU-ITS-CE2", name: "US_SU_ITS", coordinates: [-76.14, 43.04] },
-  { markerOffset: 1, otherName:"SLATE_US_NMSU_DISCOVERY", name: "NMSU-DISCOVERY", coordinates: [-106.77, 32.31] },
-  { markerOffset: 1, otherName:"JINR", name: "JINR_CONDOR_CE", coordinates: [56.743, 37.196] }, //TODO WRONG
-  { markerOffset: 1, otherName:"", name: "BR_UNICAMP", coordinates: [-47.05691000711719, -22.81839974327466 ] },
+  {
+    markerOffset: 1,
+    otherName: "BNL-SDCC-CE01",
+    name: "DUNE_US_BNL_SDCC",
+    coordinates: [-72.876311, 40.86794],
+  },
+  {
+    markerOffset: 1,
+    otherName: "DUNE_FR_CCIN2P3",
+    name: "DUNE_FR_CCIN2P3_XROOTD",
+    coordinates: [4.87, 45.78],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "NERSC",
+    coordinates: [-122.272778, 37.871667],
+  },
+  {
+    markerOffset: 1,
+    othername: "WSU",
+    name: "WSU - GRID_CE2",
+    coordinates: [-83.067, 42.358],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "CERN_PDUNE_EOS",
+    coordinates: [6.04, 46.23],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "T3_US_NERSC",
+    coordinates: [-122.3, 37.867],
+  }, //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "BR_CBPF",
+    coordinates: [-43.174, -22.954],
+  }, //placeholder location 4-12-21 someone promised I'd get this, is it 2040 yet?
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "CA_VICTORIA",
+    coordinates: [-123.31, 48.47],
+  },
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "IN_TIFR",
+    coordinates: [72.806, 18.907],
+  },
+  { markerOffset: 1, otherName: "BNL", name: "US_BNL", coordinates: [-72, 40] },
+  {
+    markerOffset: 1,
+    otherName: "FNAL",
+    name: "US_FNAL",
+    coordinates: [-88.255, 41.841],
+  },
+  {
+    markerOffset: 1,
+    otherName: "SU-ITS-CE2",
+    name: "US_SU_ITS",
+    coordinates: [-76.14, 43.04],
+  },
+  {
+    markerOffset: 1,
+    otherName: "SLATE_US_NMSU_DISCOVERY",
+    name: "NMSU-DISCOVERY",
+    coordinates: [-106.77, 32.31],
+  },
+  {
+    markerOffset: 1,
+    otherName: "JINR",
+    name: "JINR_CONDOR_CE",
+    coordinates: [56.743, 37.196],
+  }, //TODO WRONG
+  {
+    markerOffset: 1,
+    otherName: "",
+    name: "BR_UNICAMP",
+    coordinates: [-47.05691000711719, -22.81839974327466],
+  },
 
   //stuff commented out below has been found in the API results from CRIC API so I figure we should favor that
 
@@ -88,10 +220,9 @@ const markers = [
   // { markerOffset: 1, name: "IMPERIAL", coordinates: [0.17, 51.4] },
   // { markerOffset: 1, name: "QMUL", coordinates: [-0.041, 51.523] },
   // { markerOffset: 1, name: "RAL-PP", coordinates: [51.57, -1.31] },
-
 ];
 
-const baseUrlBackend="http://fermicloud129.fnal.gov:3001"
+const baseUrlBackend = "http://fermicloud129.fnal.gov:3001";
 
 const geoUrl = "./world-110m.json";
 
@@ -99,173 +230,176 @@ function App() {
   const [transfers, settransfers] = useState([]);
   const [individualSiteData, setIndividualSiteData] = useState([]);
 
-  const [dateRange, setDateRange] = useState({from: undefined, to: undefined});
-  const [savedStartDate, setSavedStartDate]=useState();
-  const [savedEndDate, setSavedEndDate]=useState();
-
-
-
-
-
-
-
-
+  const [dateRange, setDateRange] = useState({
+    from: undefined,
+    to: undefined,
+  });
+  const [savedStartDate, setSavedStartDate] = useState();
+  const [savedEndDate, setSavedEndDate] = useState();
 
   const resetCalendarDateClick = () => {
-    setDateRange({from: undefined, to: undefined})
-  }
-
-
-
-
-
+    setDateRange({ from: undefined, to: undefined });
+  };
 
   const handleDateClick = (day) => {
-
     if (dateRange.to) {
-      resetCalendarDateClick()
-    }
-    else{
+      resetCalendarDateClick();
+    } else {
       const range = DateUtils.addDayToRange(day, dateRange);
-      setDateRange(range)
+      setDateRange(range);
     }
+  };
 
+  const populateSiteGraph = (passedSiteIndex, passedSites) => {
+    // console.log(passedSites[passedSiteIndex].name + " recieve ratio: " + passedSites[passedSiteIndex].fractionOfDataReceived)
 
-  }
+    const srGraphData = {
+      labels: ["Sent", "Receive"],
+      datasets: [
+        {
+          label: "Transmit & Receive Ratio",
+          data: [0, 0],
+          backgroundColor: [
+            "rgba(255, 99, 132, 0.2)",
+            "rgba(54, 162, 235, 0.2)",
+          ],
+          borderColor: ["rgba(255, 99, 132, 1)", "rgba(54, 162, 235, 1)"],
+          borderWidth: 1,
+        },
+      ],
+    };
 
+    const sendRatio = passedSites[passedSiteIndex].fractionOfDataReceived;
+    const recvRatio = passedSites[passedSiteIndex].fractionOfDataSent;
 
+    // console.log("printed tx/rx = " + sendRatio + " " + recvRatio)
 
+    srGraphData.datasets[0].data[1] =
+      passedSites[passedSiteIndex].fractionOfDataReceived;
+    srGraphData.datasets[0].data[0] =
+      passedSites[passedSiteIndex].fractionOfDataSent;
 
+    // console.log("model tx/rx = " + srGraphData.datasets[0].data[0] + " " + srGraphData.datasets[0].data[1])
 
+    return srGraphData;
+  };
 
-const parseSiteList = () => {
-
-  console.log("fetching DUNE site date from backend fermicloud129.fnal.gov:3001/getsites")
-  fetch("http://localhost:3001" + "/getsites").then ((res) => res.json()).then((res) => {
-
-    //res.root.atp_site[0].$.latitude
-    // console.log(res.root.atp_site)
-    console.log("Dune Site list updated as of: " + res.root.last_update[0])
-
-    const mappedSites = res.root.atp_site.map((item) => {
-
-      var otherNameString = item.group[1].$.name
-      let re = new RegExp('[A-Z][A-Z]_');
-
-      // console.log(otherNameString, [parseFloat(item.$.longitude),parseFloat(item.$.latitude)])
-
-      //getting rid of UK_ US_ CA_ etc prefixes below
-      if (re.test(otherNameString))
-      {
-        otherNameString = otherNameString.substring(3).toUpperCase();
-      }
-
-      if (parseFloat(item.$.longitude)==0 && parseFloat(item.$.latitude)==0)
-      {
-        console.log("0,0 entry detected: " + otherNameString )
-      }
-
-      return{
-        markerOffset: 1,
-        name: item.$.name.toUpperCase(),
-        otherName: otherNameString,
-        coordinates: [parseFloat(item.$.longitude),parseFloat(item.$.latitude)]
-
-      };
-    });
-
-
-
-
-    //overwite the downloaded list with any hardcoded ones we have, then combine the rest
-    markers.forEach((item, i) => {
-
-
-
-    const matchId = mappedSites.findIndex(element => element.name == item.name || element.name == item.otherName)
-
-      if (matchId > -1)
-      {
-        // console.log("replacing: ")
-        // console.log(mappedSites[matchId])
-        // console.log("with ")
-        // console.log(item)
-        mappedSites[matchId]=item
-      }
-      else{
-        mappedSites.push(item)
-      }
-    });
-
-
-    //append these to the existing hardcoded sites
-    // mappedSites.forEach(x =>  markers.push(x))
-
-    console.log(mappedSites)
-    console.log(markers)
-    // console.log(res.root.atp_site[0].group[1].$.name)
-
-    parseTransfers(mappedSites)
-
-  });
-
-
-
-};
-
-
-
-
-  const parseTransfers = (passedSites) => {
-
-    resultsFound=false
-
-    if (dateRange.to === undefined){
-      dateRange.to = dateRange.from
-    }
-
-
-    setSavedStartDate(dateFormatConverter(dateRange.from))
-    setSavedEndDate(dateFormatConverter(dateRange.to))
-
-    var dateParameters = new URLSearchParams({"startDate": dateFormatConverter(dateRange.from), "endDate": dateFormatConverter(dateRange.to)});
-
-    console.log("fetching transfer data from: fermicloud129.fnal.gov:3001/test?" + dateParameters.toString())
-
-    fetch("http://localhost:3001" + "/test?" + dateParameters.toString())
-//TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
+  const parseSiteList = () => {
+    console.log(
+      "fetching DUNE site date from backend fermicloud129.fnal.gov:3001/getsites"
+    );
+    fetch("http://localhost:3001" + "/getsites")
       .then((res) => res.json())
       .then((res) => {
+        //res.root.atp_site[0].$.latitude
+        // console.log(res.root.atp_site)
+        console.log("Dune Site list updated as of: " + res.root.last_update[0]);
 
+        const mappedSites = res.root.atp_site.map((item) => {
+          var otherNameString = item.group[1].$.name;
+          let re = new RegExp("[A-Z][A-Z]_");
+
+          // console.log(otherNameString, [parseFloat(item.$.longitude),parseFloat(item.$.latitude)])
+
+          //getting rid of UK_ US_ CA_ etc prefixes below
+          if (re.test(otherNameString)) {
+            otherNameString = otherNameString.substring(3).toUpperCase();
+          }
+
+          if (
+            parseFloat(item.$.longitude) == 0 &&
+            parseFloat(item.$.latitude) == 0
+          ) {
+            console.log("0,0 entry detected: " + otherNameString);
+          }
+
+          return {
+            markerOffset: 1,
+            name: item.$.name.toUpperCase(),
+            otherName: otherNameString,
+            coordinates: [
+              parseFloat(item.$.longitude),
+              parseFloat(item.$.latitude),
+            ],
+          };
+        });
+
+        //overwite the downloaded list with any hardcoded ones we have, then combine the rest
+        markers.forEach((item, i) => {
+          const matchId = mappedSites.findIndex(
+            (element) =>
+              element.name == item.name || element.name == item.otherName
+          );
+
+          if (matchId > -1) {
+            // console.log("replacing: ")
+            // console.log(mappedSites[matchId])
+            // console.log("with ")
+            // console.log(item)
+            mappedSites[matchId] = item;
+          } else {
+            mappedSites.push(item);
+          }
+        });
+
+        //append these to the existing hardcoded sites
+        // mappedSites.forEach(x =>  markers.push(x))
+
+        console.log(mappedSites);
+        console.log(markers);
+        // console.log(res.root.atp_site[0].group[1].$.name)
+
+        parseTransfers(mappedSites);
+      });
+  };
+
+  const parseTransfers = (passedSites) => {
+    resultsFound = false;
+
+    if (dateRange.to === undefined) {
+      dateRange.to = dateRange.from;
+    }
+
+    setSavedStartDate(dateFormatConverter(dateRange.from));
+    setSavedEndDate(dateFormatConverter(dateRange.to));
+
+    var dateParameters = new URLSearchParams({
+      startDate: dateFormatConverter(dateRange.from),
+      endDate: dateFormatConverter(dateRange.to),
+    });
+
+    console.log(
+      "fetching transfer data from: fermicloud129.fnal.gov:3001/test?" +
+        dateParameters.toString()
+    );
+
+    fetch("http://localhost:3001" + "/test?" + dateParameters.toString())
+      //TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
+      .then((res) => res.json())
+      .then((res) => {
         let allTransferedAmount = 0;
 
+        console.log("result: ");
+        console.log(res.data);
 
-        console.log("result: ")
-        console.log(res.data)
+        if (
+          res.data[0][0].hasOwnProperty("name") &&
+          res.data[0][0].source !== "ERROR"
+        ) {
+          //TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
 
-
-
-        if (res.data[0][0].hasOwnProperty("name") && res.data[0][0].source!=="ERROR") {
-
-//TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
-
-          var sourceLocationAlt=passedSites[0].name
-          var destinationLocationAlt=passedSites[0].name
-          var mysteryCoordinates=passedSites[0].coordinates
+          var sourceLocationAlt = passedSites[0].name;
+          var destinationLocationAlt = passedSites[0].name;
+          var mysteryCoordinates = passedSites[0].coordinates;
 
           const mappedTransfers = res.data[0].map((entry) => {
-
-
-
             const sourceLocation = passedSites.find(
-            (location) => entry.source === location.name
-          );
-
+              (location) => entry.source === location.name
+            );
 
             const destinationLocation = passedSites.find(
-            (location) => entry.destination === location.name
-          );
-
+              (location) => entry.destination === location.name
+            );
 
             const speedInMB = parseFloat(entry["transfer_speed(MB/s)"]).toFixed(
               2
@@ -275,7 +409,7 @@ const parseSiteList = () => {
 
             // console.log(entry.file_size)
 
-            if (!sourceLocation && !destinationLocation){
+            if (!sourceLocation && !destinationLocation) {
               return {
                 from: sourceLocationAlt,
                 to: destinationLocationAlt,
@@ -284,7 +418,7 @@ const parseSiteList = () => {
                 speedInMB: speedInMB,
                 sentToDestSizeMB: entry.file_size / 1048576,
               };
-            }else if (!sourceLocation){
+            } else if (!sourceLocation) {
               return {
                 from: sourceLocationAlt,
                 to: destinationLocation.name,
@@ -293,7 +427,7 @@ const parseSiteList = () => {
                 speedInMB: speedInMB,
                 sentToDestSizeMB: entry.file_size / 1048576,
               };
-            }else if (!destinationLocation){
+            } else if (!destinationLocation) {
               return {
                 from: sourceLocation.name,
                 to: destinationLocationAlt,
@@ -302,24 +436,20 @@ const parseSiteList = () => {
                 speedInMB: speedInMB,
                 sentToDestSizeMB: entry.file_size / 1048576,
               };
-            }else{
-                return {
-               from: sourceLocation.name,
-               to: destinationLocation.name,
-               fromCoord: sourceLocation.coordinates,
-               toCoord: destinationLocation.coordinates,
-               speedInMB: speedInMB,
-               sentToDestSizeMB: entry.file_size / 1048576,
-             };
+            } else {
+              return {
+                from: sourceLocation.name,
+                to: destinationLocation.name,
+                fromCoord: sourceLocation.coordinates,
+                toCoord: destinationLocation.coordinates,
+                speedInMB: speedInMB,
+                sentToDestSizeMB: entry.file_size / 1048576,
+              };
             }
-
-
           });
 
-
-          console.log("mapped transfers: ")
-          console.log(mappedTransfers)
-
+          console.log("mapped transfers: ");
+          console.log(mappedTransfers);
 
           allTransferedAmount /= 1048576; //adjusting to mb
 
@@ -335,11 +465,10 @@ const parseSiteList = () => {
             };
           });
 
-          console.log("collection site objects:")
-          console.log(collectionOfSiteObjects)
+          console.log("collection site objects:");
+          console.log(collectionOfSiteObjects);
 
           collectionOfSiteObjects.forEach((entry) => {
-
             res.data[0]
               .filter((jsonThing) => {
                 return jsonThing.source === entry.name;
@@ -367,155 +496,86 @@ const parseSiteList = () => {
             ).toFixed(4);
           });
 
-
-          resultsFound=true;
+          resultsFound = true;
           // console.log("Results found:")
           // console.log(collectionOfSiteObjects);
 
           setIndividualSiteData(collectionOfSiteObjects);
-
-
-        }
-        else {
-          resultsFound=false;
-          console.log("No results returned for DUNE transfers")
-          console.log(resultsFound)
+        } else {
+          resultsFound = false;
+          console.log("No results returned for DUNE transfers");
+          console.log(resultsFound);
         }
 
-        resetCalendarDateClick()
+        resetCalendarDateClick();
       });
   };
 
 
 
+
+
   const proccessTransferAndCollapse = () => {
-    parseSiteList()
-    toggle()
-  }
+    parseSiteList();
+    toggle();
+  };
+
+
 
 
 
   const [tooltip, setTooltip] = useState("");
-  const [mapPosition, setMapPosition] = useState({ coordinates: [0, 0], zoom:   1 });
+  const [mapPosition, setMapPosition] = useState({
+    coordinates: [0, 0],
+    zoom: 1,
+  });
   const [isOpen, setIsOpen] = useState(false);
-  const [searchResultStatus, setSearchResultStatus ] = useState();    //TODO actually get this working so empty text returned unless search complete, then return results found or not
+  const [searchResultStatus, setSearchResultStatus] = useState(); //TODO actually get this working so empty text returned unless search complete, then return results found or not
   const [selectedSiteIndex, setSelectedSiteIndex] = useState();
+  const [dropdownOpen, setDropDownOpen] = useState(false);
+  const [showFailureMode, setshowFailureMode] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
-
-  return (
-
-
+  const toggleDropDown = () => setDropDownOpen(!dropdownOpen);
+  const toggleFailMode = () => setshowFailureMode(!showFailureMode);
 
 
 
+  const renderMap = () => {
+    console.log("checking, failure mode is: " + showFailureMode)
+    if (!showFailureMode){
+      renderTransferMap()
+    }
+    else {
+      renderFailMap()
+    }
+  }
 
 
 
+  const renderFailMap = () => {
+    return <p>fail mode map will go here </p>
+  }
 
 
 
-
-
-
-
-        <div class="container-fluid">
-    	<div class="row">
-    		<div class="col-md-12">
-    			<div class="row">
-    				<div class="col-md-12">
-    					<div class="page-header">
-    						<h1>
-    							Dune Data Thing!
-    						</h1>
-    					</div>
-    				</div>
-    			</div>
-    			<div class="row"id="mapTitleAnStatusRow">
-    				<div class="col-md-9" id="mainSectionCol">
-    					<div class="row" id="mapTitleRow">
-    						<div class="col-md-9">
-    							<div class="page-header">
-    								<h5>
-    									Interactive Transfer Visualization Map
-    								</h5>
-    							</div>
-    						</div>
-    						<div class="col-md-3" id="statusSectionCol">
-
-    							 <p>Progress par / status here</p>
-                   {checkIfResultsFound()}
-    							        <div class="progress">
-    								<div class="progress-bar w-75">
-    								</div>
-    							</div>
-
-    						</div>
-
-    					</div>
-    					<div class="row" id="legendRow">
-    						<div class="col-md-12">
-
-                  <div class="row">
-                    <p>Legend </p>
-                  </div>
-
-                  <div class="row">
-
-                <div class="col-sm-2">
-                  <h5>Data Sent</h5>
-                  <svg height="100" width="100">
-                    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="0" fill="rgba(0,235,51,0.4)" />
-                    Sorry, your browser does not support inline SVG.
-                  </svg>
-                </div>
-                <div class="col-sm-2">
-                  <h5>Data Received</h5>
-                  <svg height="100" width="100">
-                    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="0" fill="rgba(12,123,220,0.4)" />
-                    Sorry, your browser does not support inline SVG.
-                  </svg>
-                </div>
-                <div class="col-sm-2">
-                <h5>Dune Institution</h5>
-                <svg height="100" width="100">
-                  <circle cx="50" cy="50" r="10" stroke="black" stroke-width="0" fill="rgba(75,0,146,1)" />
-                  Sorry, your browser does not support inline SVG.
-                </svg>
-                </div>
-                <div class="col-sm-2">
-                <h5>Transfer Path</h5>
-
-                <svg viewBox = "0 0 100 40" version = "1.1">
-                    <line x1 = "3" y1 = "20" x2 = "75" y2 = "20" stroke = "black" stroke-width = "3" stroke = "#F53"/>
-                </svg>
-                </div>
-                <div class="col-md-4" id="legendDescriptionCol">
-                  <p>basic description of the map and how it works here</p>
-                </div>
-
-                  </div>
-
-    						</div>
-    					</div>
-    					<div class="row" id="mapRow">
-    						<div class="col-md-12">
-                  <p> map here</p>
-
-
-
-
-
-
-                  <div id={"map"}>
+  const renderTransferMap = () => {
+    return                     <div id={"map"}>
                           <ComposableMap data-tip="">
-                            <ZoomableGroup zoom={1} center={[0, 0]}
-                              onMoveEnd={setMapPosition}>
-
+                            <ZoomableGroup
+                              zoom={1}
+                              center={[0, 0]}
+                              onMoveEnd={setMapPosition}
+                            >
                               <Geographies geography={geoUrl}>
                                 {({ geographies }) =>
                                   geographies.map((geo) => (
-                                    <Geography key={geo.rsmKey} geography={geo} fill="#9998A3" stroke="#EAEAEC" />
+                                    <Geography
+                                      key={geo.rsmKey}
+                                      geography={geo}
+                                      fill="#9998A3"
+                                      stroke="#EAEAEC"
+                                    />
                                   ))
                                 }
                               </Geographies>
@@ -536,7 +596,9 @@ const parseSiteList = () => {
                                   />
                                 );
                               })}
-                              //could add another line here ^ to show ration of send vs recieve between individual sites but it's one within another not side by side so doesn't look great.
+                              //could add another line here ^ to show ration of send
+                              vs recieve between individual sites but it's one
+                              within another not side by side so doesn't look great.
                               {individualSiteData.map(
                                 (
                                   {
@@ -549,13 +611,14 @@ const parseSiteList = () => {
                                   },
                                   i
                                 ) => (
-                                  <Marker key={i} coordinates={coordinates}
-                                  onClick={() => {
-                                    //alert("click action here");
-                                    //alert("radius click")
-                                  }}
+                                  <Marker
+                                    key={i}
+                                    coordinates={coordinates}
+                                    onClick={() => {
+                                      //alert("click action here");
+                                      //alert("radius click")
+                                    }}
                                   >
-
                                     <circle
                                       r={40 * fractionOfDataSent}
                                       fill="rgba(87,235,51,0.4)"
@@ -597,14 +660,17 @@ const parseSiteList = () => {
                                       setTooltip("");
                                     }}
                                   >
-                                    <circle r={2.2/mapPosition.zoom} fill="rgba(75,0,146,1)" />
+                                    <circle
+                                      r={2.2 / mapPosition.zoom}
+                                      fill="rgba(75,0,146,1)"
+                                    />
                                   </Marker>
                                 )
                               )}
                             </ZoomableGroup>
                           </ComposableMap>
                         </div>
-                        <ReactTooltip html={true}>{tooltip}</ReactTooltip>
+  };
 
 
 
@@ -614,20 +680,116 @@ const parseSiteList = () => {
 
 
 
+  return (
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-12">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="page-header">
+                <h1>Dune Data Thing!</h1>
+                <h6>Interactive Transfer Visualization Map</h6>
+              </div>
+            </div>
+          </div>
+          <div class="row" id="mapTitleAnStatusRow">
+            <div class="col-md-9" id="mainSectionCol">
+              <div class="row" id="legendRow">
+                <div class="col-md-12">
+                  <div class="row" id="legendRow">
+                    <div class="col-md-12">
+                      <h4>Legend </h4>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <h6>Data Sent</h6>
+                      <svg height="100" width="100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="black"
+                          stroke-width="0"
+                          fill="rgba(0,235,51,0.4)"
+                        />
+                        Sorry, your browser does not support inline SVG.
+                      </svg>
+                    </div>
+                    <div class="col-sm-2">
+                      <h6>Data Received</h6>
+                      <svg height="100" width="100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          stroke="black"
+                          stroke-width="0"
+                          fill="rgba(12,123,220,0.4)"
+                        />
+                        Sorry, your browser does not support inline SVG.
+                      </svg>
+                    </div>
+                    <div class="col-sm-2">
+                      <h6>Dune Institution</h6>
+                      <svg height="100" width="100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="10"
+                          stroke="black"
+                          stroke-width="0"
+                          fill="rgba(75,0,146,1)"
+                        />
+                        Sorry, your browser does not support inline SVG.
+                      </svg>
+                    </div>
+                    <div class="col-sm-2">
+                      <h6>Transfer Path</h6>
+
+                      <svg viewBox="0 0 100 40" version="1.1">
+                        <line
+                          x1="3"
+                          y1="20"
+                          x2="75"
+                          y2="20"
+                          stroke="black"
+                          stroke-width="3"
+                          stroke="#F53"
+                        />
+                      </svg>
+                    </div>
+                    <div class="col-md-3.5" id="legendDescriptionCol">
+                      <p>basic description of the map and how it works here</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="mapRow">
+                <div class="col-md-12">
+                  <div class="row" id="mapTitleRow">
+                    <div class="col-md-6" id="mapTitleCol">
+                      <h4>Transfer Map</h4>
+                    </div>
+                    <div class="col-md-6" id="mapModeSwitchCol">
+                      <Button color="primary" onClick={console.log("in future this will switch map view")}>
+                        Switch to Failure View
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div class="row" id="mapMainRow">
+
+                    {renderTransferMap()}
 
 
-
-
-
-
-
-
-
-
-    						</div>
-    					</div>
-    					<div class="row" id="listRow">
-    						<div class="col-md-12">
+                    <ReactTooltip html={true}>{tooltip}</ReactTooltip>
+                  </div>
+                </div>
+              </div>
+              <div class="row" id="listRow">
+                <div class="col-md-12">
                   <h5>Log of Transfers</h5>
 
                   <Table>
@@ -640,7 +802,7 @@ const parseSiteList = () => {
                       </tr>
                     </thead>
                     <tbody>
-                    {transfers.map((transfer, i) => {
+                      {transfers.map((transfer, i) => {
                         return (
                           <tr key={i}>
                             <td>{transfer.to}</td>
@@ -651,93 +813,160 @@ const parseSiteList = () => {
                         );
                       })}
                     </tbody>
-
                   </Table>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-3 position-fixed" id="fixedRightCol">
+              <div class="rightSideFixed">
+                <div class="row" id="statusRow">
 
-
-
-    						</div>
-    					</div>
-    				</div>
-    				<div class="col-md-3 position-fixed" id="fixedRightCol">
-            <div class="rightSideFixed">
-    					<div class="row" id="searchButtonRow">
-    						<div class="col-md-12" id="">
-                  <div class="row">
-                  <div>
-                    <Button color="primary" onClick={toggle} style={{ marginBottom: '1rem' }}>New Search</Button>
-                    {resultsFound && <p>Showing Transfers from {savedStartDate} to {savedEndDate}</p>}
-                    </div>
+                  <div class="col-md-4">
+                    <Spinner color="primary" />
                   </div>
-    						</div>
-    					</div>
-              <Collapse isOpen={isOpen}>
-    					<div class="row" id="calendarRow">
 
 
+                  <div class="col-md-4">
+                    <p>Last Query: {checkIfResultsFound()}</p>
+                  </div>
+                  <div class="col-md-4">
 
 
-    						<div class="col-md-12">
+                  <ul>
+                    <li>Connection: </li>
+                    <li><Badge color="success">Dune CRIC API</Badge></li>
+                    <li><Badge color="success">Elasticsearch DB</Badge></li>
+                  </ul>
 
-
-
-                <div class="card" >
-                  <div class="card-body">
-                    <div class="card-header">
-                      <h5 class="card-title">Transfer Date Range</h5>
-                      <h6 class="card-subtitle mb-2 text-muted"></h6>
-                      <p class="card-text">Select a date (or range) below.</p>
-                    </div>
-
-                    <DayPicker selectedDays={[dateRange.from, dateRange]} onDayClick={handleDateClick}/>
-
-                    <div class="row" id="calendarButtonRow">
-                    <div class="col-md-12">
-                      <div class="btn-group" role="group">
-
-                        <Button color="primary" disabled={!dateRange.from} onClick={proccessTransferAndCollapse}>Get Transfers</Button>
-
-                        <Button color="primary" disabled={!dateRange.from} onClick={resetCalendarDateClick}>
-                          Reset Selected Dates
-                        </Button>
-
-                      </div>
-                      </div>
-                    </div>
 
                   </div>
+
                 </div>
 
+                <div class="row" id="searchButtonRow">
+
+                    <div class="col-md-6" id="transferModeCol">
+                      <Dropdown
+                        isOpen={dropdownOpen}
+                        toggle={toggleDropDown}
+                        onClick={console.log("will set mode in future")}
+                      >
+                        <DropdownToggle caret>Transfer Mode</DropdownToggle>
+                        <DropdownMenu>
+                          <DropdownItem value="0">
+                            Global Transfers Completed
+                          </DropdownItem>
+                          <DropdownItem value="4">
+                            Global Transfers Failed
+                          </DropdownItem>
+                          <DropdownItem divider />
+                          <DropdownItem header>
+                            Diagnostic Mode Tests{" "}
+                          </DropdownItem>
+                          <DropdownItem value="1">
+                            Only Test Mode Done
+                          </DropdownItem>
+                          <DropdownItem value="4">
+                            Only Test Mode Failed
+                          </DropdownItem>
+                        </DropdownMenu>
+                      </Dropdown>
+                    </div>
+
+                    <div class="col-md-6" id="searchButtonCol">
+                      <div class="row">
+                        <div>
+                          <Button
+                            size="lg"
+                            color="primary"
+                            onClick={toggle}
+                            style={{ marginBottom: "1rem" }}
+                          >
+                            New Search
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
 
 
+                </div>
 
+                <div class="row" id="searchRangeTextRow">
+                  {resultsFound && (
+                    <p>
+                      Showing Transfers from {savedStartDate} to{" "}
+                      {savedEndDate}
+                    </p>
+                  )}
+                </div>
 
+                <Collapse isOpen={isOpen}>
+                  <div class="row" id="calendarRow">
+                    <div class="col-md-12">
+                      <div class="card">
+                        <div class="card-body">
+                          <div class="card-header">
+                            <h5 class="card-title">Transfer Date Range</h5>
+                            <h6 class="card-subtitle mb-2 text-muted"></h6>
+                            <p class="card-text">
+                              Select a date (or range) below.
+                            </p>
+                          </div>
 
+                          <DayPicker
+                            selectedDays={[dateRange.from, dateRange]}
+                            onDayClick={handleDateClick}
+                          />
 
+                          <div class="row" id="calendarButtonRow">
+                            <div class="col-md-12">
+                              <div class="btn-group" role="group">
+                                <Button
+                                  color="primary"
+                                  disabled={!dateRange.from}
+                                  onClick={proccessTransferAndCollapse}
+                                >
+                                  Get Transfers
+                                </Button>
 
-
-
-
+                                <Button
+                                  color="primary"
+                                  disabled={!dateRange.from}
+                                  onClick={resetCalendarDateClick}
+                                >
+                                  Reset Selected Dates
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+                </Collapse>
+                <div class="row" id="detailRow">
+                  <div class="col-md-12">
+                    <p>
+                      Site:{" "}
+                      {selectedSiteIndex != undefined &&
+                        individualSiteData[selectedSiteIndex].name}{" "}
+                    </p>
 
-    					</div>
-                              </Collapse>
-    					<div class="row" id="detailRow">
-    						<div class="col-md-12">
-                <p>Site detail info here</p>
-
-                  <p> {selectedSiteIndex!=undefined && individualSiteData[selectedSiteIndex].name} </p>
-
-    						</div>
-    					</div>
-    				</div>
-    			</div>
-    		</div>
-    	</div>
+                    <Bar
+                      data={
+                        selectedSiteIndex != undefined &&
+                        populateSiteGraph(selectedSiteIndex, individualSiteData)
+                      }
+                      options={srGraphOptions}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</div>
-
-
   );
 }
 

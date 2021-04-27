@@ -4,11 +4,16 @@ const fs = require("fs");
 
 function runPython(callback, startDate, endDate) {
   const spawn = require("child_process").spawn;
+
   const process = spawn("python3", [
   "./es_client.py",
   "-S", startDate,
   "-E", endDate,
   ]);
+
+  process.on('error', function(err) {
+    console.log("Error from child process, see out.json\n")
+  });
 
   console.log("\nNode trying to run python...\n");
 
