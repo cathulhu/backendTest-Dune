@@ -1,4 +1,5 @@
-{ "data" : [
+{
+  "data": [[
 {
   "name": "1377_1_b.test",
   "source": "CERN_PDUNE_EOS",
@@ -16026,4 +16027,4 @@
   "transfer_speed(MB/s)": "2.684003871758293",
   "max_usage_percentage": "0.022515056350662588"
 }
-]}
+]]}

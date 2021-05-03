@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import {
   Collapse,
   Button,
-  CardBody,
-  Card,
   Table,
   Dropdown,
   DropdownToggle,
@@ -12,6 +10,12 @@ import {
   Badge,
   Alert,
   Spinner,
+  Card,
+  CardImg,
+  CardText,
+  CardBody,
+  CardTitle,
+  CardSubtitle,
 } from "reactstrap";
 import ReactTooltip from "react-tooltip";
 import ReactDOM from "react-dom";
@@ -29,8 +33,8 @@ import {
   Line,
   Marker,
 } from "react-simple-maps";
-import "./App.css";
 import "./css/bootstrap.min.css";
+import "./App.css";
 // import siteData from "./data/duneSiteList.json"
 
 // var fs = require('fs');
@@ -89,9 +93,9 @@ function checkIfResultsFound() {
   }
 
   if (resultsFound) {
-    return <p>Results Found</p>;
+    return "Results Found";
   } else {
-    return <p>No Results</p>;
+    return "No Results";
   }
 }
 
@@ -202,7 +206,7 @@ const markers = [
     markerOffset: 1,
     otherName: "JINR",
     name: "JINR_CONDOR_CE",
-    coordinates: [56.743, 37.196],
+    coordinates: [37.196, 56.743],
   }, //TODO WRONG
   {
     markerOffset: 1,
@@ -375,24 +379,26 @@ function App() {
 
     fetch("http://localhost:3001" + "/test?" + dateParameters.toString())
       //TODO: set a timeout on the promise above so that if there is just NO out.json file it won't hang
+
       .then((res) => res.json())
       .then((res) => {
         let allTransferedAmount = 0;
 
         console.log("result: ");
-        console.log(res.data);
+        console.log(res.data[0]);
 
         if (
-          res.data[0][0].hasOwnProperty("name") &&
-          res.data[0][0].source !== "ERROR"
+          res.data[0].hasOwnProperty("name") &&
+          res.data[0].source !== "ERROR"
         ) {
           //TODO: modify this so that if the search fails we don't crash, maybe try/accept or if statement
+
 
           var sourceLocationAlt = passedSites[0].name;
           var destinationLocationAlt = passedSites[0].name;
           var mysteryCoordinates = passedSites[0].coordinates;
 
-          const mappedTransfers = res.data[0].map((entry) => {
+          const mappedTransfers = res.data.map((entry) => {
             const sourceLocation = passedSites.find(
               (location) => entry.source === location.name
             );
@@ -469,7 +475,7 @@ function App() {
           console.log(collectionOfSiteObjects);
 
           collectionOfSiteObjects.forEach((entry) => {
-            res.data[0]
+            res.data
               .filter((jsonThing) => {
                 return jsonThing.source === entry.name;
               })
@@ -477,7 +483,7 @@ function App() {
                 entry.totalSent += item.file_size / 1048576; //dividing the total bytes into megabytes 1024 b to kb, 1024 kb to mb
               });
 
-            res.data[0]
+            res.data
               .filter((jsonThing) => {
                 return jsonThing.destination === entry.name;
               })
@@ -511,18 +517,14 @@ function App() {
       });
   };
 
-
-
-
-
   const proccessTransferAndCollapse = () => {
     parseSiteList();
     toggle();
   };
 
-
-
-
+  const collapseLegend = () => {
+    toggleLegendCard();
+  };
 
   const [tooltip, setTooltip] = useState("");
   const [mapPosition, setMapPosition] = useState({
@@ -534,36 +536,38 @@ function App() {
   const [selectedSiteIndex, setSelectedSiteIndex] = useState();
   const [dropdownOpen, setDropDownOpen] = useState(false);
   const [showFailureMode, setshowFailureMode] = useState(false);
+  const [legendOpen, setLegendOpen] = useState(false);
 
   const toggle = () => setIsOpen(!isOpen);
+  const toggleLegendCard = () => setLegendOpen(!legendOpen);
   const toggleDropDown = () => setDropDownOpen(!dropdownOpen);
   const toggleFailMode = () => setshowFailureMode(!showFailureMode);
 
-
-
   const renderMap = () => {
-    console.log("checking, failure mode is: " + showFailureMode)
-    if (!showFailureMode){
-      renderTransferMap()
+    console.log("checking, failure mode is: " + showFailureMode);
+    if (!showFailureMode) {
+      renderTransferMap();
+    } else {
+      renderFailMap();
     }
-    else {
-      renderFailMap()
-    }
-  }
-
-
+  };
 
   const renderFailMap = () => {
-    return <p>fail mode map will go here </p>
-  }
-
-
+    return <p>fail mode map will go here </p>;
+  };
 
   const renderTransferMap = () => {
     return                     <div id={"map"}>
-                          <ComposableMap data-tip="">
+                          <ComposableMap data-tip=""   projectionConfig={{
+    scale: 155,
+    rotation: [-11, 0, 0],
+  }}
+  width={800}
+  height={375}
+  style={{ width: "100%", height: "auto" }}  >
+
                             <ZoomableGroup
-                              zoom={1}
+                              zoom={0.90}
                               center={[0, 0]}
                               onMoveEnd={setMapPosition}
                             >
@@ -672,296 +676,446 @@ function App() {
                         </div>
   };
 
-
-
-
-
-
-
-
-
   return (
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-12">
-          <div class="row">
+          <div class="row" id="titleRow">
             <div class="col-md-12">
               <div class="page-header">
-                <h1>Dune Data Thing!</h1>
-                <h6>Interactive Transfer Visualization Map</h6>
+
+              <div class="row">
+                <div class="col-md-8">
+                  <h1>DUNE Network Monitor</h1>
+                  <h6>Interactive Transfer Visualization Map</h6>
+                </div>
+
+                <div class="col-md-4">
+                  <img src="https://www.dunescience.org/wp-content/uploads/2016/12/dune-horiz-logo-lg.png" id="duneLogoPic"></img>
+                </div>
+              </div>
+
               </div>
             </div>
           </div>
           <div class="row" id="mapTitleAnStatusRow">
             <div class="col-md-9" id="mainSectionCol">
               <div class="row" id="legendRow">
-                <div class="col-md-12">
-                  <div class="row" id="legendRow">
+                <div class="col-md-12" id="legendCardCol">
+                <Card id="legendCard">
+
+                  <CardBody>
+
+                    <div class="row">
+                      <div class="col-md-12">
+                        <CardTitle class="cardTitle" tag="h5">
+                          Legend
+                          <Button id="collapseLegendButton" color="primary" onClick={collapseLegend}>
+                            Collapse Legend
+                          </Button>
+                        </CardTitle>
+                      </div>
+
+                    </div>
+
+                      <Collapse isOpen={legendOpen}>
+                    <div>
+                    <CardSubtitle tag="h6" className="mb-2 text-muted">
+                      These symbols represent the flow of data, and the
+                      send/recieve ratio of different sites
+                    </CardSubtitle>
+
+                    <CardText>
+                      <p>
+                        Dune institutions are represented on the world map by
+                        small purple dots while transfers between these sites
+                        are represented by orange curves connecting the two.
+                      </p>{" "}
+                      <p>
+                        The green and blue circles represent the ratio of data
+                        sent and recieved (respectively) out of all transfered
+                        during that period.{" "}
+                      </p>{" "}
+                      <p>
+                        {" "}
+                        The larger the colored radius around a site, the greater
+                        the fraction of all data transfered during the queried
+                        time period it was reponsible for.{" "}
+                      </p>
+                    </CardText>
+
                     <div class="col-md-12">
-                      <h4>Legend </h4>
-                    </div>
-                  </div>
+                      <div class="row">
+                        <div class="col-sm-3 centAlignCol">
+                          <h6>Data Sent</h6>
 
-                  <div class="row">
-                    <div class="col-sm-2">
-                      <h6>Data Sent</h6>
-                      <svg height="100" width="100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          stroke="black"
-                          stroke-width="0"
-                          fill="rgba(0,235,51,0.4)"
-                        />
-                        Sorry, your browser does not support inline SVG.
-                      </svg>
-                    </div>
-                    <div class="col-sm-2">
-                      <h6>Data Received</h6>
-                      <svg height="100" width="100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          stroke="black"
-                          stroke-width="0"
-                          fill="rgba(12,123,220,0.4)"
-                        />
-                        Sorry, your browser does not support inline SVG.
-                      </svg>
-                    </div>
-                    <div class="col-sm-2">
-                      <h6>Dune Institution</h6>
-                      <svg height="100" width="100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="10"
-                          stroke="black"
-                          stroke-width="0"
-                          fill="rgba(75,0,146,1)"
-                        />
-                        Sorry, your browser does not support inline SVG.
-                      </svg>
-                    </div>
-                    <div class="col-sm-2">
-                      <h6>Transfer Path</h6>
+                          <svg height="100" width="100">
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="50"
+                              stroke="black"
+                              stroke-width="0"
+                              fill="rgba(0,235,51,0.4)"
+                            />
+                            Sorry, your browser does not support inline SVG.
+                          </svg>
+                        </div>
+                        <div class="col-sm-3 centAlignCol">
+                          <h6>Data Received</h6>
+                          <svg height="100" width="100">
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="50"
+                              stroke="black"
+                              stroke-width="0"
+                              fill="rgba(12,123,220,0.4)"
+                            />
+                            Sorry, your browser does not support inline SVG.
+                          </svg>
+                        </div>
+                        <div class="col-sm-3 centAlignCol">
+                          <h6>Dune Institution</h6>
+                          <svg height="100" width="100">
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="10"
+                              stroke="black"
+                              stroke-width="0"
+                              fill="rgba(75,0,146,1)"
+                            />
+                            Sorry, your browser does not support inline SVG.
+                          </svg>
+                        </div>
+                        <div class="col-sm-3 centAlignCol">
+                          <h6>Transfer Path</h6>
 
-                      <svg viewBox="0 0 100 40" version="1.1">
-                        <line
-                          x1="3"
-                          y1="20"
-                          x2="75"
-                          y2="20"
-                          stroke="black"
-                          stroke-width="3"
-                          stroke="#F53"
-                        />
-                      </svg>
+                          <svg viewBox="0 0 100 40" version="1.1">
+                            <line
+                              x1="20"
+                              y1="19"
+                              x2="80"
+                              y2="19"
+                              stroke="black"
+                              stroke-width="2"
+                              stroke="#F53"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
                     </div>
-                    <div class="col-md-3.5" id="legendDescriptionCol">
-                      <p>basic description of the map and how it works here</p>
                     </div>
-                  </div>
+                      </Collapse>
+
+
+
+                  </CardBody>
+
+                </Card>
                 </div>
+
               </div>
               <div class="row" id="mapRow">
-                <div class="col-md-12">
-                  <div class="row" id="mapTitleRow">
-                    <div class="col-md-6" id="mapTitleCol">
-                      <h4>Transfer Map</h4>
+                <div class="col-md-12" id="mapCol">
+                <Card id="mapCard">
+                  <CardImg top width="100%" />
+                  <CardBody>
+                    <div class="row">
+                      <div class="col-md-9">
+                        <CardTitle class="cardTitle" tag="h4">
+                          Transfer Map{" "}
+                        </CardTitle>
+                      </div>
+                      <div class="col-md-3" id="mapModeSwitchCol">
+                        <Button
+                          color="primary"
+                          onClick={console.log(
+                            "in future this will switch map view"
+                          )}
+                        >
+                          Toggle Failure View
+                        </Button>
+                      </div>
                     </div>
-                    <div class="col-md-6" id="mapModeSwitchCol">
-                      <Button color="primary" onClick={console.log("in future this will switch map view")}>
-                        Switch to Failure View
-                      </Button>
+
+                    <CardSubtitle tag="h6" className="mb-2 text-muted">
+                      {" "}
+                    </CardSubtitle>
+                    <CardText>
+
+                    </CardText>
+
+                    <div class="row">
+                      <div class="col-md-12">
+                        {renderTransferMap()}
+                        <ReactTooltip html={true}>{tooltip}</ReactTooltip>
+                      </div>
                     </div>
-                  </div>
-
-                  <div class="row" id="mapMainRow">
-
-                    {renderTransferMap()}
-
-
-                    <ReactTooltip html={true}>{tooltip}</ReactTooltip>
-                  </div>
+                  </CardBody>
+                </Card>
                 </div>
               </div>
               <div class="row" id="listRow">
                 <div class="col-md-12">
-                  <h5>Log of Transfers</h5>
 
-                  <Table>
-                    <thead>
-                      <tr>
-                        <th>To</th>
-                        <th>From</th>
-                        <th>Speed</th>
-                        <th>Filesize</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {transfers.map((transfer, i) => {
-                        return (
-                          <tr key={i}>
-                            <td>{transfer.to}</td>
-                            <td>{transfer.from}</td>
-                            <td>{transfer.speedInMB}</td>
-                            <td>{transfer.sentToDestSizeMB}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
+
+
+
+                <Card id="statusCard">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <CardTitle class="cardTitle" tag="h5">
+                        Log of Transfers
+                      </CardTitle>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <CardBody>
+                        <Table>
+                          <thead>
+                            <tr>
+                              <th>To</th>
+                              <th>From</th>
+                              <th>Speed</th>
+                              <th>Filesize</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {transfers.map((transfer, i) => {
+                              return (
+                                <tr key={i}>
+                                  <td>{transfer.to}</td>
+                                  <td>{transfer.from}</td>
+                                  <td>{transfer.speedInMB}</td>
+                                  <td>{transfer.sentToDestSizeMB}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </Table>
+                      </CardBody>
+                    </div>
+                  </div>
+                </Card>
+
+
+
+
+
+
+
                 </div>
               </div>
             </div>
             <div class="col-md-3 position-fixed" id="fixedRightCol">
               <div class="rightSideFixed">
-                <div class="row" id="statusRow">
+                <div class="row" id="statusCardRow">
+                  <div class="col-md-12">
+                    <Card id="statusCard">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <CardTitle class="cardTitle" tag="h5">
+                            Status
+                          </CardTitle>
+                        </div>
+                      </div>
 
-                  <div class="col-md-4">
-                    <Spinner color="primary" />
+                      <div class="row">
+                        <div class="col-md-6">
+                          <Badge color="success">Dune CRIC API</Badge>
+                        </div>
+                        <div class="col-md-6">
+                          <Badge color="success">Elasticsearch DB</Badge>
+                        </div>
+                      </div>
+
+                      <div class="row">
+                        <div class="col-md-12">
+                          <CardBody></CardBody>
+                        </div>
+                      </div>
+                    </Card>
                   </div>
-
-
-                  <div class="col-md-4">
-                    <p>Last Query: {checkIfResultsFound()}</p>
-                  </div>
-                  <div class="col-md-4">
-
-
-                  <ul>
-                    <li>Connection: </li>
-                    <li><Badge color="success">Dune CRIC API</Badge></li>
-                    <li><Badge color="success">Elasticsearch DB</Badge></li>
-                  </ul>
-
-
-                  </div>
-
                 </div>
 
                 <div class="row" id="searchButtonRow">
-
-                    <div class="col-md-6" id="transferModeCol">
-                      <Dropdown
-                        isOpen={dropdownOpen}
-                        toggle={toggleDropDown}
-                        onClick={console.log("will set mode in future")}
-                      >
-                        <DropdownToggle caret>Transfer Mode</DropdownToggle>
-                        <DropdownMenu>
-                          <DropdownItem value="0">
-                            Global Transfers Completed
-                          </DropdownItem>
-                          <DropdownItem value="4">
-                            Global Transfers Failed
-                          </DropdownItem>
-                          <DropdownItem divider />
-                          <DropdownItem header>
-                            Diagnostic Mode Tests{" "}
-                          </DropdownItem>
-                          <DropdownItem value="1">
-                            Only Test Mode Done
-                          </DropdownItem>
-                          <DropdownItem value="4">
-                            Only Test Mode Failed
-                          </DropdownItem>
-                        </DropdownMenu>
-                      </Dropdown>
-                    </div>
-
-                    <div class="col-md-6" id="searchButtonCol">
+                  <div class="col-md-12" id="newSearchCardCol">
+                    <Card id="searchCard">
                       <div class="row">
-                        <div>
-                          <Button
-                            size="lg"
-                            color="primary"
-                            onClick={toggle}
-                            style={{ marginBottom: "1rem" }}
-                          >
-                            New Search
-                          </Button>
+                        <div class="col-md-12">
+                          <CardTitle class="cardTitle" tag="h5">
+                            Search
+                          </CardTitle>
+                          <p>Last Query: {checkIfResultsFound()}</p>
                         </div>
                       </div>
-                    </div>
 
-
-                </div>
-
-                <div class="row" id="searchRangeTextRow">
-                  {resultsFound && (
-                    <p>
-                      Showing Transfers from {savedStartDate} to{" "}
-                      {savedEndDate}
-                    </p>
-                  )}
-                </div>
-
-                <Collapse isOpen={isOpen}>
-                  <div class="row" id="calendarRow">
-                    <div class="col-md-12">
-                      <div class="card">
-                        <div class="card-body">
-                          <div class="card-header">
-                            <h5 class="card-title">Transfer Date Range</h5>
-                            <h6 class="card-subtitle mb-2 text-muted"></h6>
-                            <p class="card-text">
-                              Select a date (or range) below.
+                      <div class="row">
+                        <div class="col-md-12">
+                          {resultsFound && (
+                            <p>
+                              Showing Transfers from: <b> {savedStartDate} </b>{" "}
+                              to <b> {savedEndDate} </b>
                             </p>
-                          </div>
+                          )}
+                        </div>
+                      </div>
 
-                          <DayPicker
-                            selectedDays={[dateRange.from, dateRange]}
-                            onDayClick={handleDateClick}
-                          />
-
-                          <div class="row" id="calendarButtonRow">
-                            <div class="col-md-12">
-                              <div class="btn-group" role="group">
+                      <div class="row">
+                        <div class="col-md-12">
+                          <CardBody>
+                            <div class="row">
+                              <div class="col-md-3 centAlignCol">
                                 <Button
+                                  size="normal"
                                   color="primary"
-                                  disabled={!dateRange.from}
-                                  onClick={proccessTransferAndCollapse}
+                                  onClick={toggle}
+                                  style={{ marginBottom: "1rem" }}
                                 >
-                                  Get Transfers
-                                </Button>
-
-                                <Button
-                                  color="primary"
-                                  disabled={!dateRange.from}
-                                  onClick={resetCalendarDateClick}
-                                >
-                                  Reset Selected Dates
+                                  New Search
                                 </Button>
                               </div>
+                              <div class="col-md-9 centAlignCol">
+                                <Dropdown
+                                  isOpen={dropdownOpen}
+                                  toggle={toggleDropDown}
+                                  onClick={console.log(
+                                    "will set mode in future"
+                                  )}
+                                >
+                                  <DropdownToggle caret>
+                                    Select Transfer Mode
+                                  </DropdownToggle>
+                                  <DropdownMenu>
+                                    <DropdownItem value="0">
+                                      Global Transfers Completed
+                                    </DropdownItem>
+                                    <DropdownItem value="4">
+                                      Global Transfers Failed
+                                    </DropdownItem>
+                                    <DropdownItem divider />
+                                    <DropdownItem header>
+                                      Diagnostic Mode Tests{" "}
+                                    </DropdownItem>
+                                    <DropdownItem value="1">
+                                      Only Test Mode Done
+                                    </DropdownItem>
+                                    <DropdownItem value="4">
+                                      Only Test Mode Failed
+                                    </DropdownItem>
+                                  </DropdownMenu>
+                                </Dropdown>
+                              </div>
                             </div>
-                          </div>
+
+                            <div class="row">
+                              <div class="col-md-12">
+                                <Collapse isOpen={isOpen}>
+                                  <div class="row">
+                                    <div class="col-md-12">
+                                      <CardText>
+                                        {" "}
+                                        <b>Select a date (or range) below. </b>
+                                      </CardText>
+                                    </div>
+                                  </div>
+
+                                  <div class="row">
+                                    <div class="col-md-12">
+                                      <DayPicker
+                                        selectedDays={[
+                                          dateRange.from,
+                                          dateRange,
+                                        ]}
+                                        onDayClick={handleDateClick}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div class="row" id="calendarButtonRow">
+                                    <div class="col-md-12">
+                                      <div class="row">
+                                        <div class="col-md-4">
+                                          <Button
+                                            color="primary"
+                                            disabled={!dateRange.from}
+                                            onClick={
+                                              proccessTransferAndCollapse
+                                            }
+                                          >
+                                            Get Transfers
+                                          </Button>
+                                        </div>
+
+                                        <div class="col-md-8">
+                                          <Button
+                                            color="primary"
+                                            disabled={!dateRange.from}
+                                            onClick={resetCalendarDateClick}
+                                          >
+                                            Reset Selected Dates
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Collapse>
+                              </div>
+                            </div>
+                          </CardBody>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </Collapse>
-                <div class="row" id="detailRow">
-                  <div class="col-md-12">
-                    <p>
-                      Site:{" "}
-                      {selectedSiteIndex != undefined &&
-                        individualSiteData[selectedSiteIndex].name}{" "}
-                    </p>
-
-                    <Bar
-                      data={
-                        selectedSiteIndex != undefined &&
-                        populateSiteGraph(selectedSiteIndex, individualSiteData)
-                      }
-                      options={srGraphOptions}
-                    />
+                    </Card>
                   </div>
                 </div>
+                <Card id="detailCard">
+                  <div class="row">
+                    <div class="col-md-12">
+                      <CardTitle class="cardTitle" tag="h5">
+                        Site Detail
+                      </CardTitle>
+                    </div>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-12">
+                      <CardBody>
+                        <div class="row">
+                          <div class="col-md-12">
+                            <p>
+                              Site:{" "}
+                              {selectedSiteIndex != undefined &&
+                                individualSiteData[selectedSiteIndex].name}{" "}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div class="row" id="siteGraphRow">
+                          <div class="col-md-12">
+                            <Bar
+                              data={
+                                selectedSiteIndex != undefined &&
+                                populateSiteGraph(
+                                  selectedSiteIndex,
+                                  individualSiteData
+                                )
+                              }
+                              options={srGraphOptions}
+                            />
+                          </div>
+                        </div>
+                      </CardBody>
+                    </div>
+                  </div>
+                </Card>
               </div>
+
+
             </div>
           </div>
         </div>
