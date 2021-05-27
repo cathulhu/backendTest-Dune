@@ -14,11 +14,7 @@ To do first time setup run "sh setupEverything.sh"
 
 To start: run "sh startEverything.sh"
 
-*NOTE: you can supply paramters for which month you want to retreive statistics, in the form of YYYY/MM/DD.* 
-
-If no paramters are supplied, or incorrect form it will default to 2020/12/01.
-
-Ex: **sh startEverything.sh 2021/02/01**
+Ex: **sh startEverything.sh**
 
 Then within a minute or so a browser window should launch with the network visualization.
 
